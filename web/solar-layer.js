@@ -1,6 +1,7 @@
 ﻿import { MercatorCoordinate } from 'maplibre-gl';
-import { Matrix4, Vector3 } from 'three';
+import { Matrix4, Vector3, Vector4 } from 'three';
 import { solarVector } from './solar.js';
+import { solarRibbonEdges } from './solar-ribbon.js';
 import { placeSolarLabels } from './solar-labels.js';
 
 const namespace = 'http://www.w3.org/2000/svg';
@@ -11,12 +12,12 @@ function node(type, attributes, text) {
   return element;
 }
 export class SolarLayer {
-  constructor() { this.id = 'solar-sky'; this.type = 'custom'; this.renderingMode = '3d'; this.key = ''; this.projection = new Matrix4(); this.model = new Matrix4(); this.clip = new Vector3(); this.scaleVector = new Vector3(); }
+  constructor() { this.id = 'solar-sky'; this.type = 'custom'; this.renderingMode = '3d'; this.key = ''; this.projection = new Matrix4(); this.model = new Matrix4(); this.clip = new Vector4(); this.scaleVector = new Vector3(); }
   onAdd(map) {
     this.map = map; this.canvas = node('svg', { 'aria-hidden': 'true' });
     Object.assign(this.canvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none', overflow: 'hidden' });
     map.getCanvasContainer().append(this.canvas);
-    this.path = node('path', { fill: 'none', stroke: '#ff7900', 'stroke-width': 34, 'stroke-opacity': 0.78, 'stroke-linejoin': 'bevel', 'stroke-linecap': 'butt' });
+    this.path = node('path', { fill: '#ff7900', 'fill-opacity': 0.78, stroke: 'none' });
     this.labels = node('g', {});
     this.sun = node('circle', { r: 6, fill: '#e1a322', stroke: '#ffffff', 'stroke-width': 2 });
     this.canvas.append(this.path, this.labels, this.sun);
@@ -47,17 +48,29 @@ export class SolarLayer {
     const model = this.model.makeTranslation(origin.x, origin.y, origin.z).scale(this.scaleVector.set(scale, -scale, scale));
     const projection = this.projection.fromArray(matrix).multiply(model);
     const project = vector => {
-      const clip = this.clip.set(vector.east, vector.north, vector.up).applyMatrix4(projection);
-      return { x: (clip.x + 1) * width / 2, y: (1 - clip.y) * height / 2, visible: clip.z >= -1 && clip.z <= 1 && Number.isFinite(clip.x) && Number.isFinite(clip.y) };
+      const clip = this.clip.set(vector.east, vector.north, vector.up, 1).applyMatrix4(projection);
+      const x = clip.x / clip.w, y = clip.y / clip.w, z = clip.z / clip.w;
+      return { x: (x + 1) * width / 2, y: (1 - y) * height / 2, visible: clip.w > 0 && z >= -1 && z <= 1 && Number.isFinite(x) && Number.isFinite(y) };
     };
-    let path = '', continuous = false;
+    let path = '';
+    let innerPoints = [], outerPoints = [];
+    const finishStrip = () => {
+      if (innerPoints.length > 1) {
+        const boundary = [...outerPoints, ...innerPoints.reverse()];
+        path += boundary.map((point, index) => `${index ? 'L' : 'M'}${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ') + ' Z ';
+      }
+      innerPoints = []; outerPoints = [];
+    };
     const labelSamples = [], labelPoints = [];
     for (const sample of this.samples) {
       const point = project(sample.vector), visible = sample.altitude >= 0 && point.visible;
       if (sample.label) { labelSamples.push(sample); labelPoints.push({ ...point, visible }); }
-      if (!visible) { continuous = false; continue; }
-      path += `${continuous ? 'L' : 'M'}${point.x.toFixed(2)} ${point.y.toFixed(2)} `; continuous = true;
+      const edges = solarRibbonEdges(sample, this.state.radius);
+      const inner = project(edges.inner), outer = project(edges.outer);
+      if (!visible || !inner.visible || !outer.visible) { finishStrip(); continue; }
+      innerPoints.push(inner); outerPoints.push(outer);
     }
+    finishStrip();
     this.path.setAttribute('d', path);
     const placements = placeSolarLabels(labelPoints, width, height);
     for (let index = 0; index < labelSamples.length; index++) {
