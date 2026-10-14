@@ -4,7 +4,7 @@ Software Windows para estudos de sol, vento e entorno. Código em `softwares/kob
 
 ## Uso
 
-Extraia o ZIP inteiro e abra `kobb-atlas-setup-0.1.15.exe`. Mantenha `product.json` e `payload` ao lado do instalador. Requer Windows 64 bits, [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) e internet. O Windows solicita permissão administrativa para instalar em `C:\Program Files\KOBB\Atlas\0.1.15`. É possível editar a pasta base. A instalação adiciona o Atlas ao menu Iniciar e aos Aplicativos instalados do Windows, com desinstalador próprio. Área de trabalho e barra de tarefas são opcionais; a fixação depende da disponibilidade da ação do Windows. Na conclusão, escolha se deseja abrir o Atlas e a página de agradecimento. O software abre no contexto da área de trabalho, sem manter a elevação do instalador.
+Extraia o ZIP inteiro e abra `kobb-atlas-setup-0.1.16.exe`. Mantenha `product.json` e `payload` ao lado do instalador. Requer Windows 64 bits, [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) e internet. O Windows solicita permissão administrativa para instalar em `C:\Program Files\KOBB\Atlas\0.1.16`. É possível editar a pasta base. A instalação adiciona o Atlas ao menu Iniciar e aos Aplicativos instalados do Windows, com desinstalador próprio. Área de trabalho e barra de tarefas são opcionais; a fixação depende da disponibilidade da ação do Windows. Na conclusão, escolha se deseja abrir o Atlas e a página de agradecimento. O software abre no contexto da área de trabalho, sem manter a elevação do instalador.
 
 Busque uma cidade, clique no mapa ou informe as coordenadas. Ajuste data, hora e fuso. Os atalhos Manhã, Dia e Noite usam nascer do sol, meio-dia solar e início da noite astronômica. As estações correspondem aos eventos reais no hemisfério escolhido. A carta solar e as setas permanecem alinhadas ao norte geográfico, inclusive com o mapa girado.
 
@@ -49,7 +49,7 @@ Regras: SOLID; separar cálculos, serviços e apresentação; não inventar dado
 
 Os ícones de vento usam 1 símbolo abaixo de 3,4 m/s, 2 de 3,4 até menos de 10,8 m/s e 3 a partir de 10,8 m/s. Agrupamento visual das faixas Beaufort 0–2, 3–5 e 6+, conforme [Met Office](https://metoffice.github.io/CSET/reference/operators.html). Vento calmo mantém a direção informada pela fonte. Cálculos solares diários rodam em worker separado; a seleção do terreno preserva a câmera.
 
-A versão 0.1.15 reúne os gráficos de sol e vento e o controle de horário na sidebar, sem barra inferior. O empacotamento reutiliza o ícone preparado do Atlas, sem executar o instalador para gerá-lo.
+A versão 0.1.16 reúne os gráficos de sol e vento e o controle de horário na sidebar, sem barra inferior. O empacotamento reutiliza o ícone preparado do Atlas, sem executar o instalador para gerá-lo.
 
 O pacote ainda não possui assinatura Authenticode. O SmartScreen pode mostrar “O Windows protegeu o computador”. A distribuição com editor verificado exige certificado de assinatura de código confiável; a assinatura não garante reputação imediata no SmartScreen.
 
@@ -61,13 +61,13 @@ O campo Círculo (raio km) aceita de 0,02 a 1.000 km. O raio é convertido em me
 
 Campos válidos atualizam o estudo durante a edição, após 120 ms de pausa, incluindo coordenadas, altitude, horário e raios. Não há botão de atualização manual. A legenda de usos fica à esquerda do mapa.
 
-A versão 0.1.15 aceita coordenadas e altitude com precisão fracionada, inclusive valores retornados pelo mapa e pelos serviços, para manter o desenho ambiental durante a atualização automática.
+A versão 0.1.16 aceita coordenadas e altitude com precisão fracionada, inclusive valores retornados pelo mapa e pelos serviços, para manter o desenho ambiental durante a atualização automática.
 
 A rosa dos ventos substitui o botão Norte. Suas oito direções acompanham o azimute e a inclinação da câmera, com projeção em perspectiva no modo 3D e plana no modo 2D. O destaque aponta para o norte geográfico.
 
 A rosa dos ventos fica no canto superior direito, sem fundo ou moldura. A legenda de usos e o painel de detalhes mantêm espaço para a rosa.
 
-A versão 0.1.15 inclui filtros de transporte, templos, instituições, comércios e outros pontos, com controle para ocultar tudo. Os filtros usam as categorias do cadastro cartográfico e também se aplicam aos marcadores do entorno. Ruas e nomes de cidades permanecem como referência.
+A versão 0.1.16 inclui filtros de transporte, templos, instituições, comércios e outros pontos, com controle para ocultar tudo. Os filtros usam as categorias do cadastro cartográfico e também se aplicam aos marcadores do entorno. Ruas e nomes de cidades permanecem como referência.
 
 O mapa Satélite usa Esri World Imagery (Esri, Vantor, Earthstar Geographics e GIS User Community), com atribuição visível no mapa. As imagens dependem da cobertura e disponibilidade do provedor; não são imagens em tempo real. Fonte: https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer .
 
@@ -85,8 +85,10 @@ DXF exporta círculo, norte, trajetória solar 3D, horários, vetor do vento dis
 
 O satélite consulta a cobertura Esri por região e limita a aproximação e o nível de imagens requisitado à disponibilidade. Se a consulta falhar, usa um nível conservador. Iniciar a órbita com o mouse em 2D ativa uma inclinação 3D e sincroniza o indicador.
 
-Na versão 0.1.15, a trajetória solar usa uma faixa plana tridimensional com largura de 12% do raio em metros, opacidade de 78% e laranja forte uniforme. As bordas acompanham a altitude solar e sua largura na tela varia com a perspectiva. Os horários ficam centrados na própria faixa, sem deslocamentos nem linhas-guia. Em uma colisão, o horário mais abaixo na tela é ocultado; com a mesma altura, prevalece o texto desenhado por cima.
+Na versão 0.1.16, a trajetória solar usa uma faixa plana tridimensional com largura de 12% do raio em metros, opacidade de 78% e laranja forte uniforme. A face larga fica voltada para cima, com bordas na mesma altitude e largura perpendicular ao percurso; sua largura na tela varia com a perspectiva. Os horários ficam centrados na própria faixa, sem deslocamentos nem linhas-guia. Em uma colisão, o horário mais abaixo na tela é ocultado; com a mesma altura, prevalece o texto desenhado por cima.
 
 Ferramentas Contorno e Trena: clique no mapa para adicionar vértices, arraste os pontos para editar e use Desfazer ponto ou os botões de limpeza para corrigir. Enter fecha um contorno com três ou mais pontos; Esc volta à seleção do ponto de estudo. A trena e o perímetro usam distâncias geodésicas horizontais WGS84, sem desnível; não constituem levantamento topográfico. O traçado é manual e não identifica limites cadastrais automaticamente. Traçado e medidas persistem localmente e aparecem nos arquivos exportados; CAD usa as camadas ATLAS_TERRAIN e ATLAS_MEASURE.
 
 A aparência permite clarear o mapa e personalizar terreno, água, ruas, edificações e textos. As anotações e os estudos preservam sua intensidade. As imagens de satélite não recebem esses ajustes; os controles ficam desativados nesse modo. Usos identificados e o campo de raio do entorno foram removidos da sidebar. A legenda fica à esquerda. Usar minha localização mostra um indicador de carregamento até concluir a busca e o deslocamento do mapa, restaurando o botão também em caso de falha.
+
+O controle Fixar na barra de tarefas na barra da janela solicita a fixacao pelo proprio Atlas em primeiro plano. Em Windows sem suporte a essa API, mostra o atalho no menu Iniciar para fixacao manual.

@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>kobb-atlas</AssemblyName>
-    <Version>0.1.15</Version>
+    <Version>0.1.16</Version>
     <Company>KOBB Studio</Company>
     <Product>KOBB Atlas</Product>
     <Copyright>© 2026 KOBB. Todos os direitos reservados.</Copyright>

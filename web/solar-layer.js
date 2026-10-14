@@ -27,7 +27,7 @@ export class SolarLayer {
     const key = [study.start.toISOString(), state.latitude, state.longitude, state.elevation, state.radius].join(':');
     if (key !== this.key) {
       this.key = key; this.labels.replaceChildren();
-      this.samples = study.samples.filter((sample, index, samples) => index % 3 === 0 || index === samples.length - 1 || sample.localTime?.endsWith(':00') || sample.altitude >= 0 !== (samples[Math.max(0, index - 1)].altitude >= 0)).map(sample => ({ ...sample, vector: solarVector(sample, state.radius), label: sample.altitude >= 0 && sample.localTime?.endsWith(':00') && sample.instant < study.end ? node('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-family': 'Arial', 'font-size': 11, fill: '#663e00', stroke: '#ffffff', 'stroke-width': 1.5, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, sample.localTime) : null }));
+      this.samples = study.samples.filter((sample, index, samples) => index % 3 === 0 || index === samples.length - 1 || sample.localTime?.endsWith(':00') || sample.altitude >= 0 !== (samples[Math.max(0, index - 1)].altitude >= 0)).map((sample, index, samples) => ({ ...sample, edges: solarRibbonEdges(sample, state.radius, samples[Math.max(0, index - 1)], samples[Math.min(samples.length - 1, index + 1)]), vector: solarVector(sample, state.radius), label: sample.altitude >= 0 && sample.localTime?.endsWith(':00') && sample.instant < study.end ? node('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-family': 'Arial', 'font-size': 11, fill: '#663e00', stroke: '#ffffff', 'stroke-width': 1.5, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, sample.localTime) : null }));
       for (const sample of this.samples) if (sample.label) this.labels.append(sample.label);
     }
     this.map.triggerRepaint();
@@ -65,7 +65,7 @@ export class SolarLayer {
     for (const sample of this.samples) {
       const point = project(sample.vector), visible = sample.altitude >= 0 && point.visible;
       if (sample.label) { labelSamples.push(sample); labelPoints.push({ ...point, visible }); }
-      const edges = solarRibbonEdges(sample, this.state.radius);
+      const edges = sample.edges;
       const inner = project(edges.inner), outer = project(edges.outer);
       if (!visible || !inner.visible || !outer.visible) { finishStrip(); continue; }
       innerPoints.push(inner); outerPoints.push(outer);

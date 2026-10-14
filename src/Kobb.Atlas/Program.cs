@@ -22,7 +22,13 @@ public static class Program
             catch { return 1; }
         }
         var application = new Application { ShutdownMode = ShutdownMode.OnMainWindowClose };
+        TaskbarPinning.Identify();
         var window = new AtlasWindow();
+        if (args.Contains("--pin-to-taskbar"))
+        {
+            var requested = false;
+            window.ContentRendered += async (_, _) => { if (requested) return; requested = true; await TaskbarPinning.RequestAsync(window); };
+        }
         if (args.Contains("--verify-window")) window.Verification = true;
         application.Run(window);
         return Environment.ExitCode;

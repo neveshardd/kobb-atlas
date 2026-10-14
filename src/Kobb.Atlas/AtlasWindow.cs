@@ -41,6 +41,7 @@ public sealed class AtlasWindow : Window
         var label = new TextBlock { Text = "KOBB Atlas", Margin = new Thickness(10, 0, 0, 0), FontSize = 11, VerticalAlignment = VerticalAlignment.Center }; toolbar.Children.Add(label);
         var controls = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         windowControls = controls;
+        controls.Children.Add(Control("Fixar na barra de tarefas", "M5 2H11L10 6L13 9H3L6 6ZM8 9V14", async () => await TaskbarPinning.RequestAsync(this)));
         controls.Children.Add(Control("Minimizar", "M2 7H14", () => WindowState = WindowState.Minimized));
         var resize = Control("Maximizar", "M3 2H13V12H3Z", ToggleSize);
         void UpdateResize() {
