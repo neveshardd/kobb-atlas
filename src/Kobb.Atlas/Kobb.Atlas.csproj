@@ -6,12 +6,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>kobb-atlas</AssemblyName>
-    <Version>0.1.14</Version>
+    <Version>0.1.15</Version>
     <Company>KOBB Studio</Company>
     <Product>KOBB Atlas</Product>
     <Copyright>© 2026 KOBB. Todos os direitos reservados.</Copyright>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="ACadSharp" Version="3.7.1" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
     <Content Include="../../web/dist/**/*" Link="web/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Resource Include="../../assets/atlas-logo.png" Link="Assets/atlas-logo.png" />

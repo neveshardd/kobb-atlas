@@ -83,7 +83,7 @@ export async function exportStudy(format, map, report) {
     const content = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(blob); });
     return nativeRequest('export-file', { format, filename, content });
   }
-  if (format === 'dwg') throw new Error('A exportação DWG requer o Atlas para Windows e AutoCAD instalado. Use DXF neste navegador.');
+  if (format === 'dwg') throw new Error('A exportação DWG requer o Atlas para Windows. Use DXF neste navegador.');
   const url = URL.createObjectURL(blob), anchor = document.createElement('a'); anchor.href = url; anchor.download = filename; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   return { saved: true };
 }

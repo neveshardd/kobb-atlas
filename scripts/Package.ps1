@@ -21,6 +21,14 @@ try {
     $iconPath = Join-Path $projectRoot 'src/Kobb.Atlas/obj/branding/atlas.ico'
     & $dotnetCommand restore (Join-Path $projectRoot 'src/Kobb.Atlas') -r win-x64
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao preparar as dependências da distribuição Windows.' }
+    if (!$SkipChecks) {
+        $cadInput = Join-Path $projectRoot 'src/Kobb.Atlas/obj/export-check.dxf'
+        $cadOutput = Join-Path $projectRoot 'src/Kobb.Atlas/obj/export-check.dwg'
+        & 'C:/Program Files/nodejs/node.exe' (Join-Path $projectRoot 'tests/cad-fixture.mjs') $cadInput
+        if ($LASTEXITCODE -ne 0) { throw 'Falha ao preparar o desenho de teste.' }
+        & $dotnetCommand run --project (Join-Path $projectRoot 'tests/Kobb.Atlas.CadChecks') -c Release -p:UseSharedCompilation=false -- $cadInput $cadOutput
+        if ($LASTEXITCODE -ne 0) { throw 'Falha na exportação DWG integrada.' }
+    }
     & $dotnetCommand clean (Join-Path $projectRoot 'src/Kobb.Atlas') -c Release -v:q
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao preparar os recursos da aplicação.' }
     & $dotnetCommand clean (Join-Path $projectRoot 'src/Kobb.Atlas') -c Release -r win-x64 -v:q

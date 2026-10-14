@@ -14,6 +14,7 @@ for (const [path, metadata] of Object.entries(lock.packages)) {
   else sections.push(`${manifest.name} ${manifest.version}\nLicença declarada: ${manifest.license ?? metadata.license ?? 'Consultar o pacote original'}\n${manifest.homepage ?? ''}`);
 }
 const nugetLicense = resolve(process.env.USERPROFILE, '.nuget/packages/microsoft.web.webview2/1.0.4258.31/LICENSE.txt');
+sections.push('ACadSharp 3.7.1\nhttps://github.com/DomCR/ACadSharp\n' + readFileSync(join(root, 'assets/licenses/ACadSharp.txt'), 'utf8'));
 if (existsSync(nugetLicense)) sections.push('Microsoft.Web.WebView2 1.0.4258.31\n' + readFileSync(nugetLicense, 'utf8'));
 for (const name of ['LICENSE.txt', 'ThirdPartyNotices.txt']) {
   const path = resolve(process.env.USERPROFILE, '.tools/dotnet', name);

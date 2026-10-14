@@ -263,7 +263,7 @@ element('export-save').addEventListener('click', () => guarded(async () => {
     const data = report();
     const { exportStudy } = await import('./study-export.js');
     const result = await exportStudy(element('export-format').value, map, data);
-    if (result.saved) { text('status', 'Estudo exportado'); element('export-dialog').close(); }
+    if (result.saved) { text('status', result.path ? `Arquivo salvo: ${result.path}` : 'Estudo exportado'); element('export-dialog').close(); }
     else text('status', '');
   } finally { button.disabled = false; }
 }));

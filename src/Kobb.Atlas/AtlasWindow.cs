@@ -133,7 +133,7 @@ public sealed class AtlasWindow : Window
             var type = message.RootElement.GetProperty("type").GetString()!;
             var payload = message.RootElement.GetProperty("data");
             object result;
-            if (type == "export-capabilities") result = new { dwg = FileExport.CoreConsole() is not null };
+            if (type == "export-capabilities") result = new { dwg = true };
             else if (type == "export-file") result = await FileExport.SaveAsync(this, payload);
             else if (type == "export")
             {
