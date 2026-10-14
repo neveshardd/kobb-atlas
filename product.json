@@ -20,11 +20,11 @@
     "files":  [
                   {
                       "path":  "kobb-atlas.exe",
-                      "sha256":  "7AB1391FB0A7C3913E85F0711ACAF881D05DDC5EC5AF7FEE6C1CA57390A80D20"
+                      "sha256":  "5F5185BE234915FE94556E9D7000220AFE42336CD73C444514086CECCC1DB5A1"
                   },
                   {
                       "path":  "README.md",
-                      "sha256":  "D0089B26B5E71D90E4916A88048A016129211D72DA442EF4EDE160EFC1CBD4B0"
+                      "sha256":  "B768552DB7DD9B55BFF7435B39FA2CB871F8247B070CE218F148A83691A9C8E2"
                   },
                   {
                       "path":  "THIRD-PARTY-NOTICES.txt",
@@ -39,20 +39,20 @@
                       "sha256":  "A748EE7F06C1054EB26E1091E93246A82A3E170120F08B3A9FDC6F944E82F351"
                   },
                   {
-                      "path":  "web/assets/index.es-D20DaqRT.js",
-                      "sha256":  "903B7987B1E063A9E21ED3B562A08A0715567648415EE50058F7BA8812D4BEFC"
+                      "path":  "web/assets/index.es-CK9iJttp.js",
+                      "sha256":  "93FCD1041C3F24E79C67FEF6A245068D1E870AF2DF9046F151EACA8E6B7BE575"
                   },
                   {
-                      "path":  "web/assets/index-DGbjP6sM.css",
-                      "sha256":  "EC5BA38BB4F7A8E5C293BD9FD8A1A56C24E30B71BEC7EDE2A5034E9F9A1F6A63"
+                      "path":  "web/assets/index-CjwjRb5I.js",
+                      "sha256":  "C2A79C9473F0F2DC31D8FF6B8155DD81A9B3008FAB3D9F44290B5D1BD24F30D7"
                   },
                   {
-                      "path":  "web/assets/index-Dyl8q2Ed.js",
-                      "sha256":  "21943D330E1B440FBEABBDAD9DEB2A17982064EC0DB91594EEDDEA73CFD6E63B"
+                      "path":  "web/assets/index-Dlzlvab6.css",
+                      "sha256":  "0EA7207235F12B3054C2EC0A5B872F4A5C92039771C91C2FFE33A51F68ABF1C8"
                   },
                   {
-                      "path":  "web/assets/jspdf.es.min-B_M3j_jc.js",
-                      "sha256":  "EA75E50CE107E1F222D5E2A7F6AF9E7F173E570B1CA4C58CF9569B65D8A59508"
+                      "path":  "web/assets/jspdf.es.min-Cg8w6NLX.js",
+                      "sha256":  "6001F27578826F8C772D01C8D35C136F3472180A8396A30608A05400E682CBE2"
                   },
                   {
                       "path":  "web/assets/kobb-studio-tCTMeVur.png",
@@ -75,12 +75,12 @@
                       "sha256":  "65E030E971F7A6B6754D773D961362AA4FB9B55D38B9CB679E09CEE413DB7D7B"
                   },
                   {
-                      "path":  "web/assets/study-export-C4K1lsFs.js",
-                      "sha256":  "512397D983A4517561551C2E85178ED6632E8553AD01F2A1AD2A4A35799424FC"
+                      "path":  "web/assets/study-export-BtvoxDR3.js",
+                      "sha256":  "038D9BC2E3A85250E79AB4EA3EB5DE639AEE23A093B833AFCBDF10135F90DFC8"
                   },
                   {
                       "path":  "web/index.html",
-                      "sha256":  "E64B92CEF4A2DB97FA3FA9548A51752D8937F6D900653A1976E646F0B03E4CAF"
+                      "sha256":  "678CED06CA87304DD9380D22A3CD5EA24E37DE7EA4305D18C2647094D199FDD4"
                   }
               ]
 }
