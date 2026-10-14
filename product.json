@@ -1,0 +1,62 @@
+{
+    "id":  "kobb-atlas",
+    "name":  "KOBB Atlas",
+    "version":  "0.1.2",
+    "description":  "Sol, ventos e entorno para o seu projeto.",
+    "website":  "https://kobbstudio.com.br",
+    "thankYouUrl":  "https://kobbstudio.com.br/atlas/obrigado",
+    "publisher":  "KOBB Studio",
+    "installFolder":  "Atlas",
+    "iconTint":  "#808080",
+    "kind":  "DesktopApp",
+    "systemRequirements":  "Windows 64 bits · Microsoft Edge WebView2 Runtime · internet para mapas e dados ambientais.",
+    "usageTerms":  "Uso gratuito e não comercial. As consultas enviam coordenadas ou nomes de cidades aos serviços de mapas, meteorologia e OpenStreetMap. Os estudos exportados permanecem no local escolhido. Fontes meteorológicas são previsões ou reanálises regionais; ícones do entorno indicam usos cadastrados e potencial de ruído, sem medição de decibéis. Estudo preliminar, sem certificação normativa.",
+    "assembly":  "kobb-atlas.exe",
+    "entryPoint":  "",
+    "addInId":  "00000000-0000-0000-0000-000000000000",
+    "revitVersions":  [
+
+                      ],
+    "files":  [
+                  {
+                      "path":  "kobb-atlas.exe",
+                      "sha256":  "95BE721D1F07E41EBF943DE5EBCB312A0DD249DC2D43E6160285FBAAAF57CB4A"
+                  },
+                  {
+                      "path":  "README.md",
+                      "sha256":  "198D014A6265DD9DFF82F56116B3DC186DE9E2A16A9187CB26E55E9237AC4823"
+                  },
+                  {
+                      "path":  "THIRD-PARTY-NOTICES.txt",
+                      "sha256":  "72161A73C3E2B1EF5F5DB868C4385D4317E6B4E27D661EC2898EA3D967200DEE"
+                  },
+                  {
+                      "path":  "web/assets/atlas-logo-CKR91r0G.png",
+                      "sha256":  "64C7612EE0E5F509F2A8287EC637865F631633BCCD6EEFB5EDD8D6DD332C38F7"
+                  },
+                  {
+                      "path":  "web/assets/index-B5ZnDfe9.js",
+                      "sha256":  "77C2BC873895D9F2ED1264FD2ED2D466CF801E3D294FB37242A569E16FB0DF97"
+                  },
+                  {
+                      "path":  "web/assets/index-BLqWc2HG.css",
+                      "sha256":  "F4BE3A2E5CA3BBD4CA3047472B009845E0A00356DA2984B606B11FEAF752E487"
+                  },
+                  {
+                      "path":  "web/assets/kobb-studio-tCTMeVur.png",
+                      "sha256":  "9AB6E9A552B18B0E1FD3BA35784052AA74D8E63E2CC5871BD360C979A031DAAF"
+                  },
+                  {
+                      "path":  "web/assets/maplibre-gl-worker-DxGNRm0a.mjs",
+                      "sha256":  "5F1E2F0E1624082B7E88A06E4C86085992B0F8C02929801E552F3F7A119856A9"
+                  },
+                  {
+                      "path":  "web/assets/solar-worker-DUo4mb1O.js",
+                      "sha256":  "65E030E971F7A6B6754D773D961362AA4FB9B55D38B9CB679E09CEE413DB7D7B"
+                  },
+                  {
+                      "path":  "web/index.html",
+                      "sha256":  "7C5E7BF41C22AAEE238359A091B3C4013077FE0376CB1B19E71B88F773841531"
+                  }
+              ]
+}

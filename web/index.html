@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>KOBB Atlas</title>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><img id="brand-logo" alt="KOBB Studio"><span class="brand-divider"></span><span id="atlas-logo" class="atlas-mark" aria-hidden="true"></span><strong>ATLAS</strong></div>
+    <div class="header-actions"><span id="phase" class="phase">—</span><button id="refresh-data" class="icon-button" aria-label="Atualizar dados" title="Atualizar dados">↻</button><button id="sources-button" class="quiet">Fontes</button><button id="export-button">Exportar estudo</button></div>
+  </header>
+  <main class="workspace">
+    <aside class="sidebar" aria-label="Configuração do estudo">
+      <section>
+        <div class="section-heading"><h1>Local do estudo</h1><button id="locate" class="icon-button" aria-label="Usar minha localização" title="Usar minha localização">⌖</button></div>
+        <form id="search-form" class="search-form"><label class="sr-only" for="search">Buscar cidade</label><input id="search" placeholder="Buscar cidade" autocomplete="off"><button aria-label="Buscar cidade">Buscar</button></form>
+        <div id="search-results" class="search-results" aria-live="polite"></div>
+        <div class="fields two"><label>Latitude<input id="latitude" type="number" step="0.000001" min="-85" max="85"></label><label>Longitude<input id="longitude" type="number" step="0.000001" min="-180" max="180"></label></div>
+        <div class="fields two"><label>Altitude (m)<input id="elevation" type="number" step="1" min="-500" max="9000" value="0"></label><button id="apply-location" class="align-bottom">Aplicar ponto</button></div>
+        <p id="place-name" class="caption">São Paulo · Brasil</p>
+      </section>
+      <section>
+        <h2>Data e horário</h2>
+        <div class="fields two"><label>Data<input id="date" type="date" min="1900-01-01" max="2100-12-31"></label><label>Hora local<input id="time" type="time" step="60"></label></div>
+        <label>Fuso horário<input id="timezone" list="timezones" spellcheck="false" autocomplete="off"></label><datalist id="timezones"></datalist>
+        <div class="presets"><button id="now">Agora</button><button id="morning">Manhã</button><button id="noon">Dia</button><button id="night">Noite</button></div>
+        <label>Estação astronômica<select id="season"><option value="free">Data livre</option></select></label>
+        <p id="season-name" class="caption">—</p>
+      </section>
+      <section>
+        <h2>Camadas</h2>
+        <label class="check"><input id="solar-layer" type="checkbox" checked>Trajetória solar</label>
+        <label class="check"><input id="wind-layer" type="checkbox" checked>Direção do vento</label>
+        <label class="check"><input id="noise-layer" type="checkbox">Usos e ruído potencial</label>
+        <label class="check"><input id="buildings-layer" type="checkbox" checked>Volumes cartográficos</label>
+        <div class="fields two"><label>Diagrama (raio m)<input id="radius" type="number" min="20" max="1000" step="10" value="120"></label><label>Entorno (raio m)<input id="noise-radius" type="number" min="100" max="1000" step="100" value="500"></label></div>
+      </section>
+      <section id="noise-panel" hidden>
+        <label>Usos identificados<select id="noise-places"><option value="">Selecione um uso</option></select></label>
+      </section>
+      <section>
+        <h2>Plano de análise</h2>
+        <div class="fields two"><label>Azimute (°)<input id="surface-azimuth" type="number" min="0" max="359.9" step="1" value="0"></label><label>Inclinação (°)<input id="surface-tilt" type="number" min="0" max="90" step="1" value="90"></label></div>
+        <label>Altura para sombra (m)<input id="shadow-height" type="number" min="0.1" max="300" step="0.1" value="3"></label>
+        <p class="caption">Norte geográfico = 0° · Leste = 90°</p>
+      </section>
+      <footer>© 2026 KOBB.<br><a href="https://kobbstudio.com.br" target="_blank" rel="noopener">kobbstudio.com.br</a></footer>
+    </aside>
+    <section class="main-panel" aria-label="Mapa e resultados">
+      <div class="map-area">
+        <div id="map" aria-label="Mapa do estudo"></div>
+        <div class="map-toolbar"><div class="segmented" aria-label="Visualização do mapa"><button id="view-2d" aria-pressed="false">2D</button><button id="view-3d" aria-pressed="true">3D</button></div><button id="north-up" title="Alinhar ao norte">Norte ↑</button><button id="focus-point">Ponto do estudo</button></div>
+        <div class="point-tag"><span class="point-dot"></span><span id="coordinates">—</span></div>
+        <div id="map-status" class="map-status" role="status">Carregando mapa…</div>
+        <div id="poi-card" class="poi-card" hidden><button id="close-poi" class="icon-button close-panel" aria-label="Fechar informação">×</button><strong id="poi-name"></strong><span id="poi-kind"></span><span id="poi-noise"></span></div>
+        <div id="noise-legend" class="map-legend" hidden><span><i class="source-dot"></i>Fonte potencial</span><span><i class="receiver-dot"></i>Receptor sensível</span></div>
+      </div>
+      <div class="timeline"><label for="hour-slider">Horário</label><input id="hour-slider" type="range" min="0" max="1439" step="5"><output id="hour-output" for="hour-slider">—</output></div>
+      <div class="result-grid">
+        <article class="result-card"><div class="card-heading"><h2>Sol</h2><span id="sunrise-sunset">—</span></div><div class="diagram-with-values"><svg id="solar-diagram" viewBox="0 0 220 220" role="img" aria-label="Carta solar com horários"></svg><dl><div><dt>Azimute</dt><dd id="solar-azimuth">—</dd></div><div><dt>Altitude aparente</dt><dd id="solar-altitude">—</dd></div><div><dt>Incidência no plano</dt><dd id="incidence">—</dd></div><div><dt>Sombra em plano</dt><dd id="shadow">—</dd></div></dl></div></article>
+        <article class="result-card"><div class="card-heading"><h2>Vento</h2><span id="wind-kind">Consultando…</span></div><div class="diagram-with-values"><svg id="wind-diagram" viewBox="0 0 220 220" role="img" aria-label="Direção do vento e rosa diária"></svg><dl><div><dt>Velocidade a 10 m</dt><dd id="wind-speed">—</dd></div><div><dt>Vem de</dt><dd id="wind-from">—</dd></div><div><dt>Vai para</dt><dd id="wind-to">—</dd></div><div><dt>Temperatura a 2 m</dt><dd id="temperature">—</dd></div></dl></div><p id="wind-meta" class="caption">—</p></article>
+      </div>
+      <div id="status" class="status-line" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+  <dialog id="sources-dialog"><div class="dialog-header"><h2>Fontes e método</h2><button id="close-sources" class="icon-button" aria-label="Fechar fontes">×</button></div><dl class="source-list"><div><dt>Sol</dt><dd>Astronomy Engine · posição topocêntrica, refração padrão e eventos astronômicos. Validado contra caso de referência NREL SPA; tolerância de 0,02°.</dd></div><div><dt>Vento</dt><dd><a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · previsão ou reanálise ERA5. Vento regional a 10 m; não é medição no terreno.</dd></div><div><dt>Mapa e relevo</dt><dd><a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap / OpenStreetMap</a> e <a href="https://mapterhorn.com/attribution/" target="_blank" rel="noopener">Mapterhorn</a>. Relevo global de 30 m; volumes cartográficos podem ter alturas estimadas.</dd></div><div><dt>Usos e acústica</dt><dd>Cadastro OpenStreetMap via Overpass. Atividade e horários não verificados. Ícones representam uso e potencial de ruído; decibéis não medidos.</dd></div><div><dt>Geometria</dt><dd>Azimute horário a partir do norte geográfico. Trajetória solar 3D; carta estereográfica no painel. Raio gráfico, sem representar a distância ao Sol. Coordenadas WGS84. Sombra de elemento vertical sobre plano horizontal, sem obstruções.</dd></div><div><dt>Normas</dt><dd>Estudo ambiental preliminar. Não emite verificação de NBR 15220/15575, NBR 6123 ou NBR 10151/10152. Levantamento, materiais, ocupação e medições devem integrar a avaliação de projeto.</dd></div></dl><p id="source-time" class="caption"></p><button id="sources-done" class="primary">Concluir</button></dialog>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

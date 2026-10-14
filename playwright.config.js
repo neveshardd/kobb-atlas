@@ -1,0 +1,2 @@
+import { defineConfig } from '@playwright/test';
+export default defineConfig({ testDir: './tests/browser', workers: 1, timeout: 45_000, use: { channel: 'msedge', headless: true, viewport: { width: 1360, height: 880 }, launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }, baseURL: 'http://127.0.0.1:5174' }, webServer: { command: '"C:\\Program Files\\nodejs\\node.exe" node_modules/vite/bin/vite.js --config web/vite.config.js --host 127.0.0.1', port: 5174, reuseExistingServer: true } });

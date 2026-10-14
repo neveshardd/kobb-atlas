@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>kobb-atlas</AssemblyName>
+    <Version>0.1.2</Version>
+    <Company>KOBB Studio</Company>
+    <Product>KOBB Atlas</Product>
+    <Copyright>© 2026 KOBB. Todos os direitos reservados.</Copyright>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <Content Include="../../web/dist/**/*" Link="web/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Resource Include="../../assets/atlas-logo.png" Link="Assets/atlas-logo.png" />
+    <Resource Include="../../assets/fit-to-screen-icon.png" Link="Assets/fit-to-screen-icon.png" />
+  </ItemGroup>
+</Project>
