@@ -34,7 +34,7 @@ function showPoi(properties) {
 const map = new StudyMap((latitude, longitude) => guarded(() => setLocation(latitude, longitude, 'Ponto selecionado', null, null, false)), showPoi, message => { text('map-status', message); element('map-status').hidden = !message; }, threeDimensional => {
   element('view-2d').setAttribute('aria-pressed', String(!threeDimensional));
   element('view-3d').setAttribute('aria-pressed', String(threeDimensional));
-});
+}, updateSketch);
 element('brand-logo').src = logo;
 element('atlas-logo').style.maskImage = `url("${atlasLogo}")`;
 for (const zone of ['America/Sao_Paulo', 'America/Manaus', 'America/Recife', 'America/Rio_Branco', 'Europe/Lisbon', 'UTC']) { const option = document.createElement('option'); option.value = zone; element('timezones').append(option); }
@@ -50,8 +50,10 @@ function setLocation(latitude, longitude, name = 'Ponto selecionado', elevation 
   validateLocation(latitude, longitude, elevation ?? 0);
   state = { ...state, latitude, longitude, elevation: elevation ?? 0, elevationOrigin: elevation === null ? 'Referência 0 m; confirmar altitude' : 'Informada ou geocodificada', timeZone: timeZone ?? timeZoneAt(latitude, longitude) };
   localStorage.setItem('kobb-atlas-study', JSON.stringify(state));
-  text('place-name', name); fields(); refresh(); if (focus) map.focus(latitude, longitude);
+  text('place-name', name); fields();
+  const updated = refresh(), movement = focus ? map.focus(latitude, longitude) : Promise.resolve();
   if (elevation === null) loadElevation();
+  return Promise.all([updated, movement]);
 }
 async function loadElevation() {
   const latitude = state.latitude, longitude = state.longitude;
@@ -63,7 +65,7 @@ async function loadElevation() {
   } catch { if (latitude === state.latitude && longitude === state.longitude) text('status', 'Altitude indisponível. Informe a altitude do ponto.'); }
 }
 function read() {
-  const next = { ...state, latitude: numeric('latitude', -85, 85), longitude: numeric('longitude', -180, 180), elevation: numeric('elevation', -500, 9000), date: element('date').value, time: element('time').value, timeZone: element('timezone').value.trim(), radius: numeric('radius', .02, 1000) * 1000, noiseRadius: numeric('noise-radius', 100, 1000), surfaceAzimuth: numeric('surface-azimuth', 0, 359.9), surfaceTilt: numeric('surface-tilt', 0, 90), shadowHeight: numeric('shadow-height', .1, 300) };
+  const next = { ...state, latitude: numeric('latitude', -85, 85), longitude: numeric('longitude', -180, 180), elevation: numeric('elevation', -500, 9000), date: element('date').value, time: element('time').value, timeZone: element('timezone').value.trim(), radius: numeric('radius', .02, 1000) * 1000, surfaceAzimuth: numeric('surface-azimuth', 0, 359.9), surfaceTilt: numeric('surface-tilt', 0, 90), shadowHeight: numeric('shadow-height', .1, 300) };
   validateLocation(next.latitude, next.longitude, next.elevation);
   instantFromLocal(next.date, next.time, next.timeZone);
   for (const key of ['solar', 'wind', 'noise', 'buildings']) next[key] = element(`${key}-layer`).checked;
@@ -117,7 +119,6 @@ async function renderStudy() {
   const [hour, minute] = state.time.split(':').map(Number); element('hour-slider').value = hour * 60 + minute; text('hour-output', `${state.time} ${localParts(instant, state.timeZone).offset}`);
   element('morning').disabled = !study.sunrise; element('noon').disabled = !study.noon; element('night').disabled = !study.night;
   element('noise-legend').hidden = !state.noise;
-  element('noise-panel').hidden = !state.noise;
   if (!state.noise) { map.pois([]); element('poi-card').hidden = true; }
   if (!state.noise) text('status', '');
   loadWeather(); if (state.noise) loadNoise();
@@ -147,7 +148,7 @@ async function loadNoise() {
   const key = `${state.latitude}:${state.longitude}:${state.noiseRadius}`;
   if (key === noiseKey) { map.pois(pois); return; }
   noiseKey = key; const serial = ++noiseSerial;
-  pois = []; noiseEnvelope = null; map.pois([]); element('noise-places').replaceChildren(new Option('Consultando…', '')); text('status', 'Consultando usos do entorno…');
+  pois = []; noiseEnvelope = null; map.pois([]); text('status', 'Consultando usos do entorno…');
   try {
     const envelope = await query('noise', { latitude: state.latitude, longitude: state.longitude, radius: state.noiseRadius });
     if (serial !== noiseSerial) return;
@@ -161,18 +162,47 @@ async function loadNoise() {
       seen.add(id); return [{ ...use, latitude: point.lat, longitude: point.lon, name: item.tags?.name ?? use.label, osmId: id, soundLevel: null }];
     });
     if (state.noise) map.pois(pois);
-    element('noise-places').replaceChildren(new Option(pois.length ? 'Selecione um uso' : 'Nenhum uso identificado', ''));
-    for (const poi of pois) element('noise-places').append(new Option(`${poi.label} · ${poi.name}`, poi.osmId));
     text('status', envelope.payload.remark ? `Consulta incompleta · ${pois.length} usos cadastrados` : pois.length ? `${pois.length} usos cadastrados · níveis sonoros não medidos` : 'Nenhum uso identificado no cadastro consultado');
-  } catch (error) { if (serial === noiseSerial) { noiseKey = ''; element('noise-places').replaceChildren(new Option('Consulta indisponível', '')); text('status', `Entorno: ${error.message}`); } }
+  } catch (error) { if (serial === noiseSerial) { noiseKey = ''; text('status', `Entorno: ${error.message}`); } }
 }
 function report() {
-  return { product: 'KOBB Atlas', version, exportedAt: new Date().toISOString(), localDate: state.date, location: { latitude: state.latitude, longitude: state.longitude, elevationMeters: state.elevation, datum: 'WGS84', altitudeOrigin: state.elevationOrigin }, instant: instantFromLocal(state.date, state.time, state.timeZone).toISOString(), timeZone: state.timeZone, solar: { ...position, engine: 'Astronomy Engine 2.1.19', refraction: 'padrão', sunrise: study.sunrise, sunset: study.sunset, solarNoon: study.noon, plane: { azimuth: state.surfaceAzimuth, tilt: state.surfaceTilt, ...incidence(position, state.surfaceAzimuth, state.surfaceTilt) }, shadow: { height: state.shadowHeight, result: shadow(position, state.shadowHeight), model: 'plano horizontal sem obstruções' }, samples: study.samples }, weather: weather ? { provider: 'Open-Meteo', kind: weather.kind, retrievedAt: weather.retrievedAt, grid: { latitude: weather.payload.latitude, longitude: weather.payload.longitude, elevation: weather.payload.elevation }, units: weather.payload.hourly_units, selected: selectedWind, daily: dailySeries } : null, surroundings: { enabled: state.noise, provider: 'OpenStreetMap / Overpass', retrievedAt: noiseEnvelope?.retrievedAt ?? null, radiusMeters: state.noiseRadius, items: state.noise ? pois : [], measuredSoundLevels: false }, map: { radiusMeters: state.radius, provider: element('basemap').value === 'satellite' ? 'Esri World Imagery' : 'OpenFreeMap / OpenStreetMap', pointCategories: pointCategories.filter(category => element(`points-${category}`).checked), terrain: element('terrain-layer').checked ? 'Mapterhorn 30 m' : null, verticalExaggeration: 1, buildingHeightsMayBeEstimated: true }, scope: 'Estudo ambiental preliminar. Não constitui avaliação normativa, medição acústica, vento estrutural ou simulação de obstruções.' };
+  return { product: 'KOBB Atlas', version, exportedAt: new Date().toISOString(), localDate: state.date, annotations: map.sketchReport(), location: { latitude: state.latitude, longitude: state.longitude, elevationMeters: state.elevation, datum: 'WGS84', altitudeOrigin: state.elevationOrigin }, instant: instantFromLocal(state.date, state.time, state.timeZone).toISOString(), timeZone: state.timeZone, solar: { ...position, engine: 'Astronomy Engine 2.1.19', refraction: 'padrão', sunrise: study.sunrise, sunset: study.sunset, solarNoon: study.noon, plane: { azimuth: state.surfaceAzimuth, tilt: state.surfaceTilt, ...incidence(position, state.surfaceAzimuth, state.surfaceTilt) }, shadow: { height: state.shadowHeight, result: shadow(position, state.shadowHeight), model: 'plano horizontal sem obstruções' }, samples: study.samples }, weather: weather ? { provider: 'Open-Meteo', kind: weather.kind, retrievedAt: weather.retrievedAt, grid: { latitude: weather.payload.latitude, longitude: weather.payload.longitude, elevation: weather.payload.elevation }, units: weather.payload.hourly_units, selected: selectedWind, daily: dailySeries } : null, surroundings: { enabled: state.noise, provider: 'OpenStreetMap / Overpass', retrievedAt: noiseEnvelope?.retrievedAt ?? null, radiusMeters: state.noiseRadius, items: state.noise ? pois : [], measuredSoundLevels: false }, map: { radiusMeters: state.radius, provider: element('basemap').value === 'satellite' ? 'Esri World Imagery' : 'OpenFreeMap / OpenStreetMap', pointCategories: pointCategories.filter(category => element(`points-${category}`).checked), terrain: element('terrain-layer').checked ? 'Mapterhorn 30 m' : null, verticalExaggeration: 1, buildingHeightsMayBeEstimated: true }, scope: 'Estudo ambiental preliminar. Não constitui avaliação normativa, medição acústica, vento estrutural ou simulação de obstruções.' };
 }
+let customMapColors = false;
+const palette = { land: '#edf0e8', water: '#c0dfeb', roads: '#ffffff', buildings: '#c2c5bd', labels: '#39433c' };
+try {
+  const saved = JSON.parse(localStorage.getItem('kobb-atlas-appearance'));
+  if (saved && Number.isFinite(saved.intensity) && saved.intensity >= 0 && saved.intensity <= 100) {
+    element('map-intensity').value = saved.intensity;
+    for (const key of Object.keys(palette)) if (/^#[0-9a-f]{6}$/i.test(saved[key])) element(`color-${key}`).value = saved[key];
+    customMapColors = saved.custom === true;
+  }
+} catch {}
+function updateSketch(data) {
+  for (const tool of ['select', 'outline', 'measure']) { element(`tool-${tool}`).disabled = false; element(`tool-${tool}`).setAttribute('aria-pressed', String(data.tool === tool)); }
+  element('close-outline').disabled = data.outline.length < 3 || data.closed;
+  element('sketch-undo').disabled = data.tool === 'select' || !(data.tool === 'outline' ? data.outline.length : data.measurement.length);
+  element('clear-outline').disabled = !data.outline.length; element('clear-measure').disabled = !data.measurement.length;
+  text('sketch-help', data.tool === 'outline' ? 'Clique para desenhar. Arraste os pontos para editar. Enter fecha o contorno; Esc volta ao ponto.' : data.tool === 'measure' ? 'Clique nos extremos para medir. Arraste os pontos para ajustar. Esc conclui a trena.' : 'Selecione um ponto do estudo ou escolha Contorno e Trena.');
+  text('outline-result', data.outline.length ? `Contorno: ${data.outline.length} pontos · ${data.closed ? 'perímetro' : 'comprimento'} ${format(data.perimeterMeters, 2)} m` : '');
+  text('measure-result', `Trena: ${format(data.horizontalMeters, 2)} m`);
+}
+for (const tool of ['select', 'outline', 'measure']) element(`tool-${tool}`).addEventListener('click', () => map.tool(tool));
+element('close-outline').addEventListener('click', () => map.sketchAction('close'));
+element('sketch-undo').addEventListener('click', () => map.sketchAction('undo'));
+for (const tool of ['outline', 'measure']) element(`clear-${tool}`).addEventListener('click', () => map.sketchAction('clear', tool));
+for (const key of Object.keys(palette)) element(`color-${key}`).addEventListener('input', () => { customMapColors = true; configureMap(); });
+element('map-intensity').addEventListener('input', configureMap);
+element('reset-appearance').addEventListener('click', () => { customMapColors = false; for (const [key, color] of Object.entries(palette)) element(`color-${key}`).value = color; element('map-intensity').value = 100; configureMap(); });
 function configureMap() {
   const categories = pointCategories.filter(category => element(`points-${category}`).checked);
   const all = element('points-all'); all.checked = categories.length === pointCategories.length; all.indeterminate = categories.length > 0 && !all.checked;
-  map.configure({ basemap: element('basemap').value, quality: element('map-quality').value, terrain: element('terrain-layer').checked, buildings: element('buildings-layer').checked, categories });
+  const satellite = element('basemap').value === 'satellite';
+  element('map-appearance').disabled = satellite;
+  text('map-intensity-value', `${element('map-intensity').value}%`);
+  const appearance = { intensity: Number(element('map-intensity').value), custom: customMapColors, ...Object.fromEntries(Object.keys(palette).map(key => [key, element(`color-${key}`).value])) };
+  localStorage.setItem('kobb-atlas-appearance', JSON.stringify(appearance));
+  map.configure({ appearance, basemap: element('basemap').value, quality: element('map-quality').value, terrain: element('terrain-layer').checked, buildings: element('buildings-layer').checked, categories });
 }
 for (const id of ['basemap', 'map-quality', 'terrain-layer', ...pointCategories.map(category => `points-${category}`)]) element(id).addEventListener('change', configureMap);
 element('points-all').addEventListener('change', () => {
@@ -180,7 +210,7 @@ element('points-all').addEventListener('change', () => {
   configureMap();
 });
 element('apply-location').addEventListener('click', () => guarded(() => setLocation(numeric('latitude', -85, 85), numeric('longitude', -180, 180), 'Ponto informado', numeric('elevation', -500, 9000))));
-const liveFields = ['latitude', 'longitude', 'elevation', 'date', 'time', 'timezone', 'radius', 'noise-radius', 'surface-azimuth', 'surface-tilt', 'shadow-height'];
+const liveFields = ['latitude', 'longitude', 'elevation', 'date', 'time', 'timezone', 'radius', 'surface-azimuth', 'surface-tilt', 'shadow-height'];
 let liveTimer;
 function updateLive() {
   clearTimeout(liveTimer);
@@ -208,11 +238,19 @@ element('search-form').addEventListener('submit', event => {
     text('status', target.childElementCount ? '' : 'Cidade não encontrada');
   });
 });
-element('locate').addEventListener('click', () => { text('status', 'Obtendo localização…'); navigator.geolocation.getCurrentPosition(location => guarded(() => setLocation(location.coords.latitude, location.coords.longitude, 'Minha localização', location.coords.altitude ?? 0)), () => text('status', 'Localização indisponível. Busque a cidade ou informe o ponto.'), { timeout: 15_000, maximumAge: 60_000 }); });
+element('locate').addEventListener('click', () => guarded(async () => {
+  const button = element('locate'), icon = button.innerHTML, label = button.getAttribute('aria-label');
+  button.disabled = true; button.setAttribute('aria-busy', 'true'); button.setAttribute('aria-label', 'Obtendo localização'); button.innerHTML = '<span class="locating-spinner" aria-hidden="true"></span>';
+  text('status', 'Obtendo localização...');
+  try {
+    const location = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 15_000, maximumAge: 60_000 }));
+    await setLocation(location.coords.latitude, location.coords.longitude, 'Minha localização', location.coords.altitude ?? null);
+  } catch { text('status', 'Localização indisponível. Busque a cidade ou informe o ponto.'); }
+  finally { button.disabled = false; button.setAttribute('aria-busy', 'false'); button.setAttribute('aria-label', label); button.innerHTML = icon; }
+}));
 for (const dimension of ['2d', '3d']) element(`view-${dimension}`).addEventListener('click', () => { map.view(dimension === '3d'); });
 element('focus-point').addEventListener('click', () => map.focus(state.latitude, state.longitude));
 element('close-poi').addEventListener('click', () => { element('poi-card').hidden = true; });
-element('noise-places').addEventListener('change', () => { const poi = pois.find(item => item.osmId === element('noise-places').value); if (poi) { showPoi(poi); map.focus(poi.latitude, poi.longitude); } });
 element('sources-button').addEventListener('click', () => { text('source-time', weather ? `Consulta meteorológica: ${new Date(weather.retrievedAt).toLocaleString('pt-BR')} · uso gratuito não comercial` : 'Dados meteorológicos indisponíveis · uso gratuito não comercial'); element('sources-dialog').showModal(); });
 for (const id of ['close-sources', 'sources-done']) element(id).addEventListener('click', () => element('sources-dialog').close());
 element('export-button').addEventListener('click', () => element('export-dialog').showModal());

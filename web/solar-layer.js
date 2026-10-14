@@ -16,19 +16,18 @@ export class SolarLayer {
     this.map = map; this.canvas = node('svg', { 'aria-hidden': 'true' });
     Object.assign(this.canvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none', overflow: 'hidden' });
     map.getCanvasContainer().append(this.canvas);
-    this.path = node('path', { fill: 'none', stroke: '#bf7800', 'stroke-width': 2.5, 'stroke-linejoin': 'round' });
-    this.leaders = node('g', { stroke: '#997540', 'stroke-width': 0.8, opacity: 0.6 });
+    this.path = node('path', { fill: 'none', stroke: '#bf7800', 'stroke-width': 34, 'stroke-opacity': 0.28, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
     this.labels = node('g', {});
     this.sun = node('circle', { r: 6, fill: '#e1a322', stroke: '#ffffff', 'stroke-width': 2 });
-    this.canvas.append(this.path, this.leaders, this.labels, this.sun);
+    this.canvas.append(this.path, this.labels, this.sun);
   }
   update(state, study, current) {
     this.state = { ...state }; this.current = current;
     const key = [study.start.toISOString(), state.latitude, state.longitude, state.elevation, state.radius].join(':');
     if (key !== this.key) {
-      this.key = key; this.labels.replaceChildren(); this.leaders.replaceChildren();
-      this.samples = study.samples.filter((sample, index, samples) => index % 3 === 0 || index === samples.length - 1 || sample.localTime?.endsWith(':00') || sample.altitude >= 0 !== (samples[Math.max(0, index - 1)].altitude >= 0)).map(sample => ({ ...sample, vector: solarVector(sample, state.radius), label: sample.altitude >= 0 && sample.localTime?.endsWith(':00') && sample.instant < study.end ? node('text', { 'text-anchor': 'middle', 'font-family': 'Arial', 'font-size': 11, fill: '#663e00', stroke: '#ffffff', 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, sample.localTime) : null }));
-      for (const sample of this.samples) if (sample.label) { this.labels.append(sample.label); sample.leader = node('line', {}); this.leaders.append(sample.leader); }
+      this.key = key; this.labels.replaceChildren();
+      this.samples = study.samples.filter((sample, index, samples) => index % 3 === 0 || index === samples.length - 1 || sample.localTime?.endsWith(':00') || sample.altitude >= 0 !== (samples[Math.max(0, index - 1)].altitude >= 0)).map(sample => ({ ...sample, vector: solarVector(sample, state.radius), label: sample.altitude >= 0 && sample.localTime?.endsWith(':00') && sample.instant < study.end ? node('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-family': 'Arial', 'font-size': 11, fill: '#663e00', stroke: '#ffffff', 'stroke-width': 1.5, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, sample.localTime) : null }));
+      for (const sample of this.samples) if (sample.label) this.labels.append(sample.label);
     }
     this.map.triggerRepaint();
   }
@@ -62,15 +61,11 @@ export class SolarLayer {
     this.path.setAttribute('d', path);
     const placements = placeSolarLabels(labelPoints, width, height);
     for (let index = 0; index < labelSamples.length; index++) {
-      const sample = labelSamples[index], placement = placements[index], point = labelPoints[index];
+      const sample = labelSamples[index], placement = placements[index];
       sample.label.style.display = placement ? '' : 'none';
-      sample.leader.style.display = placement?.displaced ? '' : 'none';
       if (!placement) continue;
       sample.label.setAttribute('x', placement.x); sample.label.setAttribute('y', placement.y);
-      if (placement.displaced) {
-        sample.leader.setAttribute('x1', point.x); sample.leader.setAttribute('y1', point.y);
-        sample.leader.setAttribute('x2', placement.x); sample.leader.setAttribute('y2', placement.y - 5);
-      }
+
     }
     const point = project(solarVector(this.current, this.state.radius));
     this.sun.style.display = this.current.altitude >= 0 && point.visible ? '' : 'none';

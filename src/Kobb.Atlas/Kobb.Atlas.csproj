@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>kobb-atlas</AssemblyName>
-    <Version>0.1.11</Version>
+    <Version>0.1.12</Version>
     <Company>KOBB Studio</Company>
     <Product>KOBB Atlas</Product>
     <Copyright>© 2026 KOBB. Todos os direitos reservados.</Copyright>

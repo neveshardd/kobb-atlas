@@ -49,10 +49,8 @@ test('consulta do entorno não inventa níveis sonoros', async ({ page }) => {
   await page.goto('/'); await page.locator('#noise-layer').check();
   await expect(page.locator('#status')).toContainText('2 usos cadastrados');
   await expect(page.locator('#noise-legend')).toBeVisible();
-  await page.locator('#noise-places').selectOption('node/1');
-  await expect(page.locator('#poi-name')).toHaveText('Instituição de teste');
-  await expect(page.locator('#poi-kind')).toContainText('Receptor sensível');
-  await expect(page.locator('#poi-noise')).toHaveText('Nível sonoro não medido');
+  await expect(page.locator('#noise-places')).toHaveCount(0);
+  await expect(page.locator('#noise-radius')).toHaveCount(0);
   await page.locator('#export-button').click();
   await page.locator('#export-format').selectOption('json');
   const pending = page.waitForEvent('download'); await page.locator('#export-save').click();

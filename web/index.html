@@ -39,7 +39,20 @@
         <label class="check"><input id="wind-layer" type="checkbox" checked>Direção do vento</label>
         <label class="check"><input id="noise-layer" type="checkbox">Usos e ruído potencial</label>
         <label class="check"><input id="buildings-layer" type="checkbox">Volumes cartográficos</label>
-        <div class="fields two"><label>Círculo (raio km)<input id="radius" type="number" min="0.02" max="1000" step="0.01" value="0.12"></label><label>Entorno (raio m)<input id="noise-radius" type="number" min="100" max="1000" step="100" value="500"></label></div>
+        <label>Círculo (raio km)<input id="radius" type="number" min="0.02" max="1000" step="0.01" value="0.12"></label>
+      </section>
+      <section>
+        <h2>Terreno e medidas</h2>
+        <div class="sketch-tools"><button id="tool-select" aria-pressed="true" disabled>Ponto</button><button id="tool-outline" aria-pressed="false" disabled>Contorno</button><button id="tool-measure" aria-pressed="false" disabled>Trena</button></div>
+        <p id="sketch-help" class="caption">Aguarde o mapa carregar.</p>
+        <div class="sketch-actions"><button id="close-outline" disabled>Fechar contorno</button><button id="sketch-undo" disabled>Desfazer ponto</button><button id="clear-outline" disabled>Limpar contorno</button><button id="clear-measure" disabled>Limpar trena</button></div>
+        <p id="outline-result" class="caption"></p><output id="measure-result" aria-live="polite">Trena: 0 m</output>
+        <p class="caption">Distâncias horizontais no mapa, sem considerar desnível.</p>
+      </section>
+      <section>
+        <h2>Aparência do mapa</h2>
+        <fieldset id="map-appearance"><label>Intensidade <output id="map-intensity-value">100%</output><input id="map-intensity" type="range" min="0" max="100" value="100"></label><div class="fields two"><label>Terreno<input id="color-land" type="color" value="#edf0e8"></label><label>Água<input id="color-water" type="color" value="#c0dfeb"></label><label>Ruas<input id="color-roads" type="color" value="#ffffff"></label><label>Edificações<input id="color-buildings" type="color" value="#c2c5bd"></label><label>Textos<input id="color-labels" type="color" value="#39433c"></label></div><button id="reset-appearance">Restaurar aparência</button></fieldset>
+        <p class="caption">Ajustes disponíveis apenas no mapa, sem alterar as imagens de satélite.</p>
       </section>
       <section>
         <h2>Pontos do mapa</h2>
@@ -49,9 +62,6 @@
         <label class="check"><input id="points-institution" type="checkbox" checked>Instituições, ensino e saúde</label>
         <label class="check"><input id="points-commerce" type="checkbox" checked>Comércios e serviços</label>
         <label class="check"><input id="points-other" type="checkbox" checked>Outros pontos</label>
-      </section>
-      <section id="noise-panel" hidden>
-        <label>Usos identificados<select id="noise-places"><option value="">Selecione um uso</option></select></label>
       </section>
       <section>
         <h2>Plano de análise</h2>

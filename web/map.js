@@ -6,6 +6,7 @@ import { TerrainOrbit } from './orbit.js';
 import { MapCompass } from './compass.js';
 import { MapDisplay } from './map-display.js';
 import { SatelliteCoverage, satelliteSource } from './satellite.js';
+import { MapSketch } from './map-sketch.js';
 import { windStrength, windGlyph } from './wind.js';
 
 setWorkerUrl(workerUrl);
@@ -14,7 +15,7 @@ const collection = features => ({ type: 'FeatureCollection', features });
 const feature = (type, coordinates, properties = {}) => ({ type: 'Feature', properties, geometry: { type, coordinates } });
 
 export class StudyMap {
-  constructor(onPoint, onPoi, onState, onView = () => {}) {
+  constructor(onPoint, onPoi, onState, onView = () => {}, onSketch = () => {}) {
     this.ready = false;
     this.map = new LibreMap({ container: 'map', style: 'https://tiles.openfreemap.org/styles/liberty', center: [-46.6333, -23.5505], zoom: 16, pitch: 50, maxPitch: 60, pixelRatio: 0.85, maxTileCacheSize: 80, maxTileCacheZoomLevels: 2, fadeDuration: 0, attributionControl: true, locale: { 'Map.Title': 'Mapa do estudo', 'NavigationControl.ZoomIn': 'Aproximar', 'NavigationControl.ZoomOut': 'Afastar', 'NavigationControl.ResetBearing': 'Girar mapa; clique para alinhar ao norte', 'AttributionControl.ToggleAttribution': 'Mostrar fontes do mapa' } });
     const syncView = () => onView(this.map.getPitch() > 0.01);
@@ -27,6 +28,7 @@ export class StudyMap {
     this.map.on('error', event => { if (!this.ready) onState('Mapa indisponível. Verifique a conexão.'); });
     this.map.on('click', event => {
       if (event.originalEvent.button !== 0) return;
+      if (this.sketch?.consumeClick(event)) return;
       if (this.ready && this.map.queryRenderedFeatures(event.point, { layers: ['poi-icons'] }).length) return;
       onPoint(event.lngLat.lat, event.lngLat.wrap().lng);
     });
@@ -37,6 +39,7 @@ export class StudyMap {
       this.map.addSource('terrain', { type: 'raster-dem', url: 'https://tiles.mapterhorn.com/tilejson.json', tileSize: 512, maxzoom: 12, encoding: 'terrarium', attribution: '© <a href="https://mapterhorn.com/attribution/">Mapterhorn</a>' });
       for (const id of ['solar', 'wind', 'point', 'poi']) this.map.addSource(id, { type: 'geojson', data: collection([]) });
       this.map.addLayer({ id: 'solar-line', type: 'line', source: 'solar', filter: ['==', ['geometry-type'], 'LineString'], paint: { 'line-color': ['match', ['get', 'kind'], 'ring', '#777777', '#bf7800'], 'line-width': ['match', ['get', 'kind'], 'ring', 1, 3] } });
+      this.map.addLayer({ id: 'map-wash', type: 'background', paint: { 'background-color': '#ffffff', 'background-opacity': 0 } }, 'solar-line');
       this.sky = new SolarLayer(); this.map.addLayer(this.sky);
       this.addWindIcons();
       this.map.addLayer({ id: 'wind-icons', type: 'symbol', source: 'wind', layout: { 'icon-image': ['get', 'icon'], 'icon-size': .8, 'icon-rotate': ['get', 'rotation'], 'icon-rotation-alignment': 'map', 'icon-pitch-alignment': 'viewport', 'icon-allow-overlap': true } });
@@ -44,7 +47,7 @@ export class StudyMap {
       this.addIcons();
       this.map.addLayer({ id: 'poi-icons', type: 'symbol', source: 'poi', layout: { 'icon-image': ['get', 'category'], 'icon-size': 0.75, 'icon-allow-overlap': true, 'icon-pitch-alignment': 'viewport', 'icon-rotation-alignment': 'viewport' } });
       this.map.moveLayer('solar-sky');
-      this.map.on('click', 'poi-icons', event => onPoi(event.features[0].properties));
+      this.map.on('click', 'poi-icons', event => { if (this.sketch?.tool === 'select') onPoi(event.features[0].properties); });
       this.map.on('mouseenter', 'poi-icons', () => { this.map.getCanvas().style.cursor = 'pointer'; });
       this.map.on('mouseleave', 'poi-icons', () => { this.map.getCanvas().style.cursor = ''; });
       this.coverage = new SatelliteCoverage(this.map, baseLayers[0].id, (active, limit) => {
@@ -52,6 +55,7 @@ export class StudyMap {
         note.hidden = !active; note.dataset.zoom = limit ?? ''; 
       });
       this.display = new MapDisplay(this.map, baseLayers);
+      this.sketch = new MapSketch(this.map, onSketch);
       this.ready = true;
       if (this.displaySettings) { this.display.apply(this.displaySettings); this.coverage.setActive(this.displaySettings.basemap === 'satellite'); }
       if (this.pending) this.update(...this.pending);
@@ -129,6 +133,9 @@ export class StudyMap {
     this.displaySettings = settings;
     if (this.ready) { this.display.apply(settings); this.coverage.setActive(settings.basemap === 'satellite'); }
   }
+  tool(value) { this.sketch?.setTool(value); }
+  sketchAction(action, tool) { if (action === 'close') this.sketch?.close(); else if (action === 'undo') this.sketch?.undo(); else if (action === 'clear') this.sketch?.clear(tool); }
+  sketchReport() { return this.sketch?.snapshot() ?? null; }
   snapshot() {
     if (!this.ready) return Promise.reject(new Error('Aguarde o mapa carregar para exportar.'));
     return new Promise((resolve, reject) => {
@@ -153,5 +160,12 @@ export class StudyMap {
       if (this.displaySettings && this.ready) { this.display.settings = null; this.display.apply(this.displaySettings); }
     });
   }
-  focus(latitude, longitude) { this.map.easeTo({ center: [longitude, latitude], zoom: Math.max(this.map.getZoom(), 16), duration: 600 }); }
+  focus(latitude, longitude) {
+    return new Promise(resolve => {
+      const finish = () => { clearTimeout(timeout); this.map.off('moveend', finish); resolve(); };
+      const timeout = setTimeout(finish, 1500);
+      this.map.once('moveend', finish);
+      this.map.easeTo({ center: [longitude, latitude], zoom: Math.max(this.map.getZoom(), 16), duration: 600 });
+    });
+  }
 }

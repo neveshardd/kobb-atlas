@@ -56,5 +56,22 @@ export class MapDisplay {
     const terrain = settings.terrain && this.map.getPitch() > 0;
     if (terrain !== !!this.map.getTerrain()) this.map.setTerrain(terrain ? { source: 'terrain', exaggeration: 1 } : null);
     this.map.setPaintProperty('solar-line', 'line-color', satellite ? '#ffffff' : '#777777');
+    const appearance = settings.appearance ?? { intensity: 100, custom: false };
+    const washOpacity = satellite ? 0 : 1 - appearance.intensity / 100;
+    if (this.washOpacity !== washOpacity) { this.washOpacity = washOpacity; this.map.setPaintProperty('map-wash', 'background-opacity', washOpacity); }
+    const appearanceKey = JSON.stringify([satellite, { ...appearance, intensity: undefined }]);
+    if (appearanceKey !== this.appearanceKey) {
+      this.appearanceKey = appearanceKey;
+      for (const layer of this.layers) {
+        let property, color;
+        if (layer.type === 'fill-extrusion') { property = 'fill-extrusion-color'; color = appearance.buildings; }
+        else if (layer.type === 'fill' && layer['source-layer'] === 'building') { property = 'fill-color'; color = appearance.buildings; }
+        else if (layer.type === 'fill' && ['landcover', 'landuse', 'park'].includes(layer['source-layer'])) { property = 'fill-color'; color = appearance.land; }
+        else if (layer.type === 'fill' && layer['source-layer'] === 'water') { property = 'fill-color'; color = appearance.water; }
+        else if (layer.type === 'line' && layer['source-layer'] === 'transportation' && !layer.id.includes('casing')) { property = 'line-color'; color = appearance.roads; }
+        else if (layer.type === 'symbol' && layer.layout?.['text-field']) { property = 'text-color'; color = appearance.labels; }
+        if (property) this.map.setPaintProperty(layer.id, property, !satellite && appearance.custom && color ? color : layer.paint?.[property] ?? null);
+      }
+    }
   }
 }

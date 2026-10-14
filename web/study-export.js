@@ -22,7 +22,7 @@ const number = value => Number.isFinite(value) ? value.toLocaleString('pt-BR', {
 export async function studyCanvas(map, report) {
   const snapshot = await map.snapshot();
   const [solar, wind, compass] = await Promise.all(['solar-diagram', 'wind-diagram', 'map-compass'].map(id => svgImage(document.querySelector(id === 'map-compass' ? '#map-compass svg' : `#${id}`))));
-  const canvas = document.createElement('canvas'); canvas.width = 1600; canvas.height = 1550;
+  const canvas = document.createElement('canvas'); canvas.width = 1600; canvas.height = 1650;
   const context = canvas.getContext('2d'); context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height);
   const text = (value, x, y, size = 20, color = '#263a30') => { context.fillStyle = color; context.font = `${size}px Arial`; context.fillText(value, x, y); };
   text('KOBB ATLAS — ESTUDO AMBIENTAL', 50, 65, 30);
@@ -52,6 +52,8 @@ export async function studyCanvas(map, report) {
   text(`Vento: Open-Meteo · ${report.weather?.kind === 'history' ? 'Reanálise ERA5' : report.weather ? 'Previsão / modelo' : 'Dados indisponíveis'} · ${document.getElementById('wind-meta').textContent}`, 50, bottom += 30, 17);
   if (report.weather) text(`Consulta meteorológica: ${localTime(report.weather.retrievedAt)} · ${report.timeZone}`, 50, bottom += 30, 17);
   text(`Entorno: OpenStreetMap / Overpass · ${report.surroundings.items.length} usos · níveis sonoros não medidos`, 50, bottom += 30, 17);
+  if (report.annotations?.measurement.length > 1) text(`Trena: ${number(report.annotations.horizontalMeters)} m · distância horizontal WGS84`, 50, bottom += 30, 17);
+  if (report.annotations?.outline.length > 1) text(`Contorno manual: ${report.annotations.outline.length} pontos · ${report.annotations.closed ? 'perímetro' : 'comprimento'} ${number(report.annotations.perimeterMeters)} m`, 50, bottom += 30, 17);
   text('Norte geográfico · imagens cartográficas sem garantia de data atual · estudo preliminar, sem certificação normativa.', 50, bottom += 30, 17);
   text(`Exportado em ${localTime(report.exportedAt)} · ${report.timeZone}`, 50, bottom += 30, 15, '#626861');
   const cropped = document.createElement('canvas'); cropped.width = canvas.width; cropped.height = Math.min(canvas.height, bottom + 45);

@@ -1,10 +1,11 @@
 import { solarVector } from './solar.js';
+import { localPoint } from './geometry.js';
 
 export function cadDrawing(report) {
   const output = [];
   const pair = (code, value) => output.push(String(code), String(value));
   const point = (vector, offset = 0) => { pair(10 + offset, vector.east); pair(20 + offset, vector.north); pair(30 + offset, vector.up ?? 0); };
-  const line = (layer, from, to) => { pair(0, 'LINE'); pair(8, layer); point(from); point(to, 1); };
+  const line = (layer, from, to) => { pair(0, 'LINE'); pair(8, layer); if (layer === 'ATLAS_TERRAIN') pair(62, 1); if (layer === 'ATLAS_MEASURE') pair(62, 5); point(from); point(to, 1); };
   const radius = report.map.radiusMeters;
   const text = (value, east, north, up = 0) => {
     pair(0, 'TEXT'); pair(8, 'ATLAS_NOTES'); point({ east, north, up }); pair(40, radius * .035);
@@ -14,6 +15,13 @@ export function cadDrawing(report) {
   pair(0, 'SECTION'); pair(2, 'ENTITIES');
   pair(0, 'CIRCLE'); pair(8, 'ATLAS_RADIUS'); point({ east: 0, north: 0 }); pair(40, radius);
   pair(0, 'POINT'); pair(8, 'ATLAS_ORIGIN'); point({ east: 0, north: 0 });
+  if (report.annotations) {
+    for (const [layer, coordinates, closed] of [['ATLAS_TERRAIN', report.annotations.outline, report.annotations.closed], ['ATLAS_MEASURE', report.annotations.measurement, false]]) {
+      const points = coordinates.map(coordinate => localPoint(report.location.latitude, report.location.longitude, coordinate));
+      for (let index = 1; index < points.length; index++) line(layer, points[index - 1], points[index]);
+      if (closed && points.length >= 3) line(layer, points[points.length - 1], points[0]);
+    }
+  }
   line('ATLAS_NORTH', { east: 0, north: radius * 1.1 }, { east: 0, north: radius * 1.35 });
   text('N', -radius * .02, radius * 1.4);
   let previous;
