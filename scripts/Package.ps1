@@ -19,6 +19,8 @@ try {
     & $npmCommand run build
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao compilar a interface.' }
     $iconPath = Join-Path $projectRoot 'src/Kobb.Atlas/obj/branding/atlas.ico'
+    & $dotnetCommand restore (Join-Path $projectRoot 'src/Kobb.Atlas') -r win-x64
+    if ($LASTEXITCODE -ne 0) { throw 'Falha ao preparar as dependências da distribuição Windows.' }
     & $dotnetCommand clean (Join-Path $projectRoot 'src/Kobb.Atlas') -c Release -v:q
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao preparar os recursos da aplicação.' }
     & $dotnetCommand clean (Join-Path $projectRoot 'src/Kobb.Atlas') -c Release -r win-x64 -v:q
