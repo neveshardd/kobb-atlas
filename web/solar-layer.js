@@ -16,7 +16,7 @@ export class SolarLayer {
     this.map = map; this.canvas = node('svg', { 'aria-hidden': 'true' });
     Object.assign(this.canvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none', overflow: 'hidden' });
     map.getCanvasContainer().append(this.canvas);
-    this.path = node('path', { fill: 'none', stroke: '#bf7800', 'stroke-width': 34, 'stroke-opacity': 0.28, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+    this.path = node('path', { fill: 'none', stroke: '#ff7900', 'stroke-width': 34, 'stroke-opacity': 0.78, 'stroke-linejoin': 'bevel', 'stroke-linecap': 'butt' });
     this.labels = node('g', {});
     this.sun = node('circle', { r: 6, fill: '#e1a322', stroke: '#ffffff', 'stroke-width': 2 });
     this.canvas.append(this.path, this.labels, this.sun);

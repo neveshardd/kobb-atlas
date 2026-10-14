@@ -1,7 +1,7 @@
 {
     "id":  "kobb-atlas",
     "name":  "KOBB Atlas",
-    "version":  "0.1.12",
+    "version":  "0.1.13",
     "description":  "Sol, ventos e entorno para o seu projeto.",
     "website":  "https://kobbstudio.com.br",
     "thankYouUrl":  "https://kobbstudio.com.br/atlas/obrigado",
@@ -20,11 +20,11 @@
     "files":  [
                   {
                       "path":  "kobb-atlas.exe",
-                      "sha256":  "5F5185BE234915FE94556E9D7000220AFE42336CD73C444514086CECCC1DB5A1"
+                      "sha256":  "E714A4C60F3C0D6EC775A69AD4D8511495CDE7828397CAD7155D8439559B9788"
                   },
                   {
                       "path":  "README.md",
-                      "sha256":  "B768552DB7DD9B55BFF7435B39FA2CB871F8247B070CE218F148A83691A9C8E2"
+                      "sha256":  "CEE3310711885CA0E18F421C3CE64F84C0336D1991D3E4DAAA5847075331F4F5"
                   },
                   {
                       "path":  "THIRD-PARTY-NOTICES.txt",
@@ -39,20 +39,20 @@
                       "sha256":  "A748EE7F06C1054EB26E1091E93246A82A3E170120F08B3A9FDC6F944E82F351"
                   },
                   {
-                      "path":  "web/assets/index.es-CK9iJttp.js",
-                      "sha256":  "93FCD1041C3F24E79C67FEF6A245068D1E870AF2DF9046F151EACA8E6B7BE575"
+                      "path":  "web/assets/index.es-DJZO2fVz.js",
+                      "sha256":  "84EF7AF243B5B076FE288B5C15557C88A10DBA6BCAB96C6C5B84C25285ACB03C"
                   },
                   {
-                      "path":  "web/assets/index-CjwjRb5I.js",
-                      "sha256":  "C2A79C9473F0F2DC31D8FF6B8155DD81A9B3008FAB3D9F44290B5D1BD24F30D7"
+                      "path":  "web/assets/index-CcASDY70.js",
+                      "sha256":  "011489A8F43CB37EBABEAAD5A87C9746BBCB1BF72B46A229C623287D43E2638D"
                   },
                   {
                       "path":  "web/assets/index-Dlzlvab6.css",
                       "sha256":  "0EA7207235F12B3054C2EC0A5B872F4A5C92039771C91C2FFE33A51F68ABF1C8"
                   },
                   {
-                      "path":  "web/assets/jspdf.es.min-Cg8w6NLX.js",
-                      "sha256":  "6001F27578826F8C772D01C8D35C136F3472180A8396A30608A05400E682CBE2"
+                      "path":  "web/assets/jspdf.es.min-CzM64obu.js",
+                      "sha256":  "882382E7649910A900AD1B1CF5DBC30F1A3F8144FB6C29394A50F24119121B36"
                   },
                   {
                       "path":  "web/assets/kobb-studio-tCTMeVur.png",
@@ -75,12 +75,12 @@
                       "sha256":  "65E030E971F7A6B6754D773D961362AA4FB9B55D38B9CB679E09CEE413DB7D7B"
                   },
                   {
-                      "path":  "web/assets/study-export-BtvoxDR3.js",
-                      "sha256":  "038D9BC2E3A85250E79AB4EA3EB5DE639AEE23A093B833AFCBDF10135F90DFC8"
+                      "path":  "web/assets/study-export-ZHlg6IKh.js",
+                      "sha256":  "00B7BB5CE5A93D6B620F50F08412A35AE7237AF1F23CD5378591619C117E5567"
                   },
                   {
                       "path":  "web/index.html",
-                      "sha256":  "678CED06CA87304DD9380D22A3CD5EA24E37DE7EA4305D18C2647094D199FDD4"
+                      "sha256":  "FC921DDDF8C3F67353A656234353562E32BB1A4655E31EEE61A7C503542C350D"
                   }
               ]
 }
