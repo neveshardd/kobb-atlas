@@ -31,7 +31,9 @@ test('estudo solar, campos estáveis e exportação com dados indisponíveis', a
   await expect(page.locator('#export-button')).toBeEnabled();
   await page.waitForTimeout(200);
   expect(await page.locator('#radius').evaluate(input => input.checkValidity())).toBe(true);
-  const download = page.waitForEvent('download'); await page.locator('#export-button').click();
+  await page.locator('#export-button').click();
+  await page.locator('#export-format').selectOption('json');
+  const download = page.waitForEvent('download'); await page.locator('#export-save').click();
   const exported = await download;
   expect(exported.suggestedFilename()).toBe('atlas-2026-06-21.json');
   const report = JSON.parse(await readFile(await exported.path(), 'utf-8'));
@@ -51,7 +53,9 @@ test('consulta do entorno não inventa níveis sonoros', async ({ page }) => {
   await expect(page.locator('#poi-name')).toHaveText('Instituição de teste');
   await expect(page.locator('#poi-kind')).toContainText('Receptor sensível');
   await expect(page.locator('#poi-noise')).toHaveText('Nível sonoro não medido');
-  const pending = page.waitForEvent('download'); await page.locator('#export-button').click();
+  await page.locator('#export-button').click();
+  await page.locator('#export-format').selectOption('json');
+  const pending = page.waitForEvent('download'); await page.locator('#export-save').click();
   const download = await pending; const stream = await download.createReadStream(); const chunks = []; for await (const chunk of stream) chunks.push(chunk);
   const report = JSON.parse(Buffer.concat(chunks).toString('utf8'));
   expect(report.surroundings.measuredSoundLevels).toBe(false); expect(report.surroundings.items.every(item => item.soundLevel === null)).toBe(true);

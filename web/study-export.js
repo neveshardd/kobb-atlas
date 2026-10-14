@@ -26,7 +26,8 @@ export async function studyCanvas(map, report) {
   const context = canvas.getContext('2d'); context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height);
   const text = (value, x, y, size = 20, color = '#263a30') => { context.fillStyle = color; context.font = `${size}px Arial`; context.fillText(value, x, y); };
   text('KOBB ATLAS — ESTUDO AMBIENTAL', 50, 65, 30);
-  text(`${report.instant} · ${report.timeZone}`, 50, 103);
+  const localTime = value => new Intl.DateTimeFormat('pt-BR', { timeZone: report.timeZone, dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+  text(`${localTime(report.instant)} · ${report.timeZone}`, 50, 103);
   text(`Latitude ${report.location.latitude}° · Longitude ${report.location.longitude}° · Altitude ${number(report.location.elevationMeters)} m`, 50, 137);
   text(`Raio ${number(report.map.radiusMeters / 1000)} km · ${report.map.provider}`, 50, 169);
   const scale = Math.min(1500 / snapshot.width, 720 / snapshot.height);
@@ -49,10 +50,10 @@ export async function studyCanvas(map, report) {
   let bottom = row + 315;
   text(`Sol: Astronomy Engine · ${document.getElementById('sunrise-sunset').textContent}`, 50, bottom, 17);
   text(`Vento: Open-Meteo · ${report.weather?.kind === 'history' ? 'Reanálise ERA5' : report.weather ? 'Previsão / modelo' : 'Dados indisponíveis'} · ${document.getElementById('wind-meta').textContent}`, 50, bottom += 30, 17);
-  if (report.weather) text(`Consulta meteorológica: ${report.weather.retrievedAt}`, 50, bottom += 30, 17);
+  if (report.weather) text(`Consulta meteorológica: ${localTime(report.weather.retrievedAt)} · ${report.timeZone}`, 50, bottom += 30, 17);
   text(`Entorno: OpenStreetMap / Overpass · ${report.surroundings.items.length} usos · níveis sonoros não medidos`, 50, bottom += 30, 17);
   text('Norte geográfico · imagens cartográficas sem garantia de data atual · estudo preliminar, sem certificação normativa.', 50, bottom += 30, 17);
-  text(`Exportado em ${report.exportedAt}`, 50, bottom += 30, 15, '#626861');
+  text(`Exportado em ${localTime(report.exportedAt)} · ${report.timeZone}`, 50, bottom += 30, 15, '#626861');
   const cropped = document.createElement('canvas'); cropped.width = canvas.width; cropped.height = Math.min(canvas.height, bottom + 45);
   cropped.getContext('2d').drawImage(canvas, 0, 0);
   return cropped;
@@ -75,7 +76,7 @@ export async function exportStudy(format, map, report) {
     }
   }
   if (!blob) throw new Error('Não foi possível gerar o arquivo do estudo.');
-  const filename = `atlas-${report.instant.slice(0, 10)}.${format}`;
+  const filename = `atlas-${report.localDate ?? report.instant.slice(0, 10)}.${format}`;
   if (window.chrome?.webview) {
     const content = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(blob); });
     return nativeRequest('export-file', { format, filename, content });

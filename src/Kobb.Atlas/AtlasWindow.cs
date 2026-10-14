@@ -127,13 +127,15 @@ public sealed class AtlasWindow : Window
         var id = 0;
         try
         {
-            if (args.WebMessageAsJson.Length > 2_000_000) throw new InvalidDataException("Estudo excedeu o limite de exportação.");
+            if (args.WebMessageAsJson.Length > 48_000_000) throw new InvalidDataException("Estudo excedeu o limite de exportação.");
             using var message = JsonDocument.Parse(args.WebMessageAsJson);
             id = message.RootElement.GetProperty("id").GetInt32();
             var type = message.RootElement.GetProperty("type").GetString()!;
             var payload = message.RootElement.GetProperty("data");
             object result;
-            if (type == "export")
+            if (type == "export-capabilities") result = new { dwg = FileExport.CoreConsole() is not null };
+            else if (type == "export-file") result = await FileExport.SaveAsync(this, payload);
+            else if (type == "export")
             {
                 var dialog = new SaveFileDialog { Title = "Exportar estudo", Filter = "Estudo Atlas (*.json)|*.json", FileName = "atlas-" + DateTime.Now.ToString("yyyy-MM-dd") + ".json", OverwritePrompt = true };
                 var saved = dialog.ShowDialog(this) == true;

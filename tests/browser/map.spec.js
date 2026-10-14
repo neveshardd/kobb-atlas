@@ -27,7 +27,7 @@ test('mapa real carrega terreno e camadas com worker local', async ({ page }) =>
   await expect(page.locator('#view-2d')).toHaveAttribute('aria-pressed', 'true');
   await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
   await page.mouse.down({ button: 'middle' });
-  await page.mouse.move(canvas.x + canvas.width / 2 + 30, canvas.y + canvas.height / 2 - 100, { steps: 8 });
+  await page.mouse.move(canvas.x + canvas.width / 2 + 30, canvas.y + canvas.height / 2, { steps: 8 });
   await page.mouse.up({ button: 'middle' });
   await expect(page.locator('#view-3d')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#view-2d')).toHaveAttribute('aria-pressed', 'false');

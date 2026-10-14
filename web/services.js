@@ -15,7 +15,7 @@ if (typeof window !== 'undefined' && window.chrome?.webview) window.chrome.webvi
 export function nativeRequest(type, data) {
   return new Promise((resolve, reject) => {
     const id = ++serial;
-    const timer = setTimeout(() => { nativePending.delete(id); reject(new Error('A consulta excedeu o tempo disponível.')); }, 40_000);
+    const timer = setTimeout(() => { nativePending.delete(id); reject(new Error('A consulta excedeu o tempo disponível.')); }, type === 'export-file' ? 180_000 : 40_000);
     nativePending.set(id, { resolve, reject, timer });
     window.chrome.webview.postMessage({ id, type, data });
   });

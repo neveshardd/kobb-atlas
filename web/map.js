@@ -5,6 +5,7 @@ import { SolarLayer } from './solar-layer.js';
 import { TerrainOrbit } from './orbit.js';
 import { MapCompass } from './compass.js';
 import { MapDisplay } from './map-display.js';
+import { SatelliteCoverage, satelliteSource } from './satellite.js';
 import { windStrength, windGlyph } from './wind.js';
 
 setWorkerUrl(workerUrl);
@@ -31,7 +32,7 @@ export class StudyMap {
     });
     this.map.on('load', () => {
       const baseLayers = this.map.getStyle().layers;
-      this.map.addSource('satellite', { type: 'raster', tiles: ['https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19, attribution: 'Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community' });
+      this.map.addSource('satellite', satelliteSource(12));
       this.map.addLayer({ id: 'satellite-image', type: 'raster', source: 'satellite', layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 0 } }, baseLayers[0].id);
       this.map.addSource('terrain', { type: 'raster-dem', url: 'https://tiles.mapterhorn.com/tilejson.json', tileSize: 512, maxzoom: 12, encoding: 'terrarium', attribution: '© <a href="https://mapterhorn.com/attribution/">Mapterhorn</a>' });
       for (const id of ['solar', 'wind', 'point', 'poi']) this.map.addSource(id, { type: 'geojson', data: collection([]) });
@@ -46,9 +47,13 @@ export class StudyMap {
       this.map.on('click', 'poi-icons', event => onPoi(event.features[0].properties));
       this.map.on('mouseenter', 'poi-icons', () => { this.map.getCanvas().style.cursor = 'pointer'; });
       this.map.on('mouseleave', 'poi-icons', () => { this.map.getCanvas().style.cursor = ''; });
+      this.coverage = new SatelliteCoverage(this.map, baseLayers[0].id, (active, limit) => {
+        const note = document.getElementById('satellite-limit');
+        note.hidden = !active; note.dataset.zoom = limit ?? ''; 
+      });
       this.display = new MapDisplay(this.map, baseLayers);
       this.ready = true;
-      if (this.displaySettings) this.display.apply(this.displaySettings);
+      if (this.displaySettings) { this.display.apply(this.displaySettings); this.coverage.setActive(this.displaySettings.basemap === 'satellite'); }
       if (this.pending) this.update(...this.pending);
       if (this.pendingPois) this.pois(this.pendingPois);
       onState('');
@@ -122,7 +127,7 @@ export class StudyMap {
   }
   configure(settings) {
     this.displaySettings = settings;
-    if (this.ready) this.display.apply(settings);
+    if (this.ready) { this.display.apply(settings); this.coverage.setActive(settings.basemap === 'satellite'); }
   }
   snapshot() {
     if (!this.ready) return Promise.reject(new Error('Aguarde o mapa carregar para exportar.'));

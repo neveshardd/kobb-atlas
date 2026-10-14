@@ -20,6 +20,7 @@ export class TerrainOrbit {
     if (!this.target || event.pointerType !== 'mouse' || !(event.button === 1 || event.button === 2 || (event.button === 0 && event.ctrlKey))) return;
     event.preventDefault(); event.stopImmediatePropagation();
     this.map.stop();
+    if (this.map.getPitch() <= 0.01) this.map.jumpTo({ pitch: 50 });
     this.drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, bearing: this.map.getBearing(), pitch: this.map.getPitch(), target: [...this.target] };
     this.map.getCanvas().setPointerCapture(event.pointerId);
     this.map.getCanvas().style.cursor = 'grabbing';
