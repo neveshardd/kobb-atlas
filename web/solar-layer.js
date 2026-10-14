@@ -1,6 +1,7 @@
 ﻿import { MercatorCoordinate } from 'maplibre-gl';
 import { Matrix4, Vector3 } from 'three';
 import { solarVector } from './solar.js';
+import { placeSolarLabels } from './solar-labels.js';
 
 const namespace = 'http://www.w3.org/2000/svg';
 function node(type, attributes, text) {
@@ -10,23 +11,24 @@ function node(type, attributes, text) {
   return element;
 }
 export class SolarLayer {
-  constructor() { this.id = 'solar-sky'; this.type = 'custom'; this.renderingMode = '3d'; this.key = ''; }
+  constructor() { this.id = 'solar-sky'; this.type = 'custom'; this.renderingMode = '3d'; this.key = ''; this.projection = new Matrix4(); this.model = new Matrix4(); this.clip = new Vector3(); this.scaleVector = new Vector3(); }
   onAdd(map) {
     this.map = map; this.canvas = node('svg', { 'aria-hidden': 'true' });
     Object.assign(this.canvas.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none', overflow: 'hidden' });
     map.getCanvasContainer().append(this.canvas);
     this.path = node('path', { fill: 'none', stroke: '#bf7800', 'stroke-width': 2.5, 'stroke-linejoin': 'round' });
+    this.leaders = node('g', { stroke: '#997540', 'stroke-width': 0.8, opacity: 0.6 });
     this.labels = node('g', {});
     this.sun = node('circle', { r: 6, fill: '#e1a322', stroke: '#ffffff', 'stroke-width': 2 });
-    this.canvas.append(this.path, this.labels, this.sun);
+    this.canvas.append(this.path, this.leaders, this.labels, this.sun);
   }
   update(state, study, current) {
     this.state = { ...state }; this.current = current;
     const key = [study.start.toISOString(), state.latitude, state.longitude, state.elevation, state.radius].join(':');
     if (key !== this.key) {
-      this.key = key; this.labels.replaceChildren();
-      this.samples = study.samples.map(sample => ({ ...sample, vector: solarVector(sample, state.radius), label: sample.altitude >= 0 && sample.localTime?.endsWith(':00') && sample.instant < study.end ? node('text', { 'text-anchor': 'middle', 'font-family': 'Arial', 'font-size': 11, fill: '#663e00', stroke: '#ffffff', 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, sample.localTime) : null }));
-      for (const sample of this.samples) if (sample.label) this.labels.append(sample.label);
+      this.key = key; this.labels.replaceChildren(); this.leaders.replaceChildren();
+      this.samples = study.samples.filter((sample, index, samples) => index % 3 === 0 || index === samples.length - 1 || sample.localTime?.endsWith(':00') || sample.altitude >= 0 !== (samples[Math.max(0, index - 1)].altitude >= 0)).map(sample => ({ ...sample, vector: solarVector(sample, state.radius), label: sample.altitude >= 0 && sample.localTime?.endsWith(':00') && sample.instant < study.end ? node('text', { 'text-anchor': 'middle', 'font-family': 'Arial', 'font-size': 11, fill: '#663e00', stroke: '#ffffff', 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, sample.localTime) : null }));
+      for (const sample of this.samples) if (sample.label) { this.labels.append(sample.label); sample.leader = node('line', {}); this.leaders.append(sample.leader); }
     }
     this.map.triggerRepaint();
   }
@@ -36,23 +38,40 @@ export class SolarLayer {
     if (!this.state.solar) return;
     const canvas = this.map.getCanvas(), width = canvas.clientWidth, height = canvas.clientHeight;
     this.canvas.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    const ground = this.map.queryTerrainElevation([this.state.longitude, this.state.latitude]);
+    const ground = this.map.getTerrain() ? this.map.queryTerrainElevation([this.state.longitude, this.state.latitude]) : 0;
+    const matrix = input.defaultProjectionData.mainMatrix;
+    const renderKey = [this.key, this.current.azimuth, this.current.altitude, ground, width, height, ...matrix].join(':');
+    if (renderKey === this.renderKey) return;
+    this.renderKey = renderKey;
     const origin = MercatorCoordinate.fromLngLat([this.state.longitude, this.state.latitude], Number.isFinite(ground) ? ground : this.state.elevation);
     const scale = origin.meterInMercatorCoordinateUnits();
-    const model = new Matrix4().makeTranslation(origin.x, origin.y, origin.z).scale(new Vector3(scale, -scale, scale));
-    const projection = new Matrix4().fromArray(input.defaultProjectionData.mainMatrix).multiply(model);
+    const model = this.model.makeTranslation(origin.x, origin.y, origin.z).scale(this.scaleVector.set(scale, -scale, scale));
+    const projection = this.projection.fromArray(matrix).multiply(model);
     const project = vector => {
-      const clip = new Vector3(vector.east, vector.north, vector.up).applyMatrix4(projection);
+      const clip = this.clip.set(vector.east, vector.north, vector.up).applyMatrix4(projection);
       return { x: (clip.x + 1) * width / 2, y: (1 - clip.y) * height / 2, visible: clip.z >= -1 && clip.z <= 1 && Number.isFinite(clip.x) && Number.isFinite(clip.y) };
     };
     let path = '', continuous = false;
+    const labelSamples = [], labelPoints = [];
     for (const sample of this.samples) {
       const point = project(sample.vector), visible = sample.altitude >= 0 && point.visible;
-      if (sample.label) { sample.label.style.display = visible ? '' : 'none'; sample.label.setAttribute('x', point.x); sample.label.setAttribute('y', point.y - 9); }
+      if (sample.label) { labelSamples.push(sample); labelPoints.push({ ...point, visible }); }
       if (!visible) { continuous = false; continue; }
       path += `${continuous ? 'L' : 'M'}${point.x.toFixed(2)} ${point.y.toFixed(2)} `; continuous = true;
     }
     this.path.setAttribute('d', path);
+    const placements = placeSolarLabels(labelPoints, width, height);
+    for (let index = 0; index < labelSamples.length; index++) {
+      const sample = labelSamples[index], placement = placements[index], point = labelPoints[index];
+      sample.label.style.display = placement ? '' : 'none';
+      sample.leader.style.display = placement?.displaced ? '' : 'none';
+      if (!placement) continue;
+      sample.label.setAttribute('x', placement.x); sample.label.setAttribute('y', placement.y);
+      if (placement.displaced) {
+        sample.leader.setAttribute('x1', point.x); sample.leader.setAttribute('y1', point.y);
+        sample.leader.setAttribute('x2', placement.x); sample.leader.setAttribute('y2', placement.y - 5);
+      }
+    }
     const point = project(solarVector(this.current, this.state.radius));
     this.sun.style.display = this.current.altitude >= 0 && point.visible ? '' : 'none';
     this.sun.setAttribute('cx', point.x); this.sun.setAttribute('cy', point.y);

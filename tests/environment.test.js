@@ -77,4 +77,8 @@ test('geometria WGS84 preserva escala, norte e continuidade no antimeridiano', (
   const inverse = GeographicLib.Geodesic.WGS84.Inverse(-23.55, -46.63, north[1], north[0]);
   assert.ok(Math.abs(inverse.s12 - 100) < 1e-6); assert.ok(Math.abs(inverse.azi1) < 1e-6);
   assert.ok(offsetPoint(0, 180, 100, 0)[0] > 180);
+  for (const angle of [0, 45, 90, 180, 270]) {
+    const point = offsetPoint(-23.55, -46.63, 1_000_000 * Math.sin(angle * Math.PI / 180), 1_000_000 * Math.cos(angle * Math.PI / 180));
+    assert.ok(Math.abs(GeographicLib.Geodesic.WGS84.Inverse(-23.55, -46.63, point[1], point[0]).s12 - 1_000_000) < 1e-6);
+  }
 });

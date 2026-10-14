@@ -45,7 +45,7 @@ public sealed class AtlasWindow : Window
         var resize = Control("Maximizar", "M3 2H13V12H3Z", ToggleSize);
         void UpdateResize() {
             var maximized = WindowState == WindowState.Maximized;
-            resize.Content = maximized ? new System.Windows.Shapes.Path { Data = Geometry.Parse("M3 5H11V13H3ZM6 5V2H14V10H11"), Stroke = Brushes.Black, StrokeThickness = 1, Width = 16, Height = 14 } : new Border { Width = 16, Height = 14, Background = Brushes.Black, OpacityMask = new ImageBrush(new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/kobb-atlas;component/Assets/fit-to-screen-icon.png"))) { Stretch = Stretch.Uniform } };
+            resize.Content = maximized ? new System.Windows.Shapes.Path { Data = Geometry.Parse("M3 5H11V13H3ZM6 5V2H14V10H11"), Stroke = Brushes.Black, StrokeThickness = 1, Width = 16, Height = 14 } : new System.Windows.Shapes.Path { Data = Geometry.Parse("M3 2H13V12H3Z"), Stroke = Brushes.Black, StrokeThickness = 1, Width = 16, Height = 14 };
             resize.ToolTip = maximized ? "Restaurar janela" : "Maximizar"; AutomationProperties.SetName(resize, (string)resize.ToolTip);
         }
         StateChanged += (_, _) => UpdateResize(); UpdateResize(); controls.Children.Add(resize);
@@ -69,7 +69,6 @@ public sealed class AtlasWindow : Window
         var border = new FrameworkElementFactory(typeof(Border)); border.Name = "background"; border.SetValue(Border.BackgroundProperty, Brushes.Transparent);
         var presenter = new FrameworkElementFactory(typeof(ContentPresenter)); presenter.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center); presenter.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center); border.AppendChild(presenter); template.VisualTree = border;
         var hover = new Trigger { Property = IsMouseOverProperty, Value = true }; hover.Setters.Add(new Setter(Border.BackgroundProperty, close ? Brushes.Red : new SolidColorBrush(Color.FromRgb(188, 188, 188)), "background")); template.Triggers.Add(hover);
-        var focus = new Trigger { Property = IsKeyboardFocusedProperty, Value = true }; focus.Setters.Add(new Setter(Border.BorderBrushProperty, Brushes.Black, "background")); focus.Setters.Add(new Setter(Border.BorderThicknessProperty, new Thickness(1), "background")); template.Triggers.Add(focus);
         style.Setters.Add(new Setter(TemplateProperty, template)); button.Style = style;
         AutomationProperties.SetName(button, name); button.Click += (_, _) => action();
         return button;

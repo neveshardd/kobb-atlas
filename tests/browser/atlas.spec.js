@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 test('estudo solar, campos estáveis e exportação com dados indisponíveis', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
@@ -7,15 +8,36 @@ test('estudo solar, campos estáveis e exportação com dados indisponíveis', a
   await page.goto('/');
   await expect(page.locator('#solar-altitude')).not.toHaveText('—');
   await expect(page.locator('#wind-kind')).toHaveText('Indisponível');
+  await page.locator('#latitude').fill('-23.5505123456');
+  await page.locator('#longitude').fill('-46.6333123456');
+  await page.locator('#elevation').fill('760.5');
+  await expect(page.locator('#coordinates')).toContainText('23,55051');
+  await expect(page.locator('#status')).not.toContainText('Confira os campos');
   const box = await page.locator('#latitude').boundingBox();
   await page.locator('#latitude').focus(); await page.locator('#latitude').selectText();
   expect(await page.locator('#latitude').boundingBox()).toEqual(box);
   await page.locator('#date').fill('2026-06-21'); await page.locator('#date').dispatchEvent('change');
-  await page.locator('#time').fill('12:00'); await page.locator('#time').dispatchEvent('change');
-  await expect(page.locator('#season-name')).toHaveText('Inverno');
+  await page.locator('#time').fill('12:00');
+  await expect(page.locator('#hour-output')).toContainText('12:00');
+  await expect(page.locator('#phase')).toHaveAttribute('aria-label', 'Dia');
+  await expect(page.locator('#phase svg')).toBeVisible();
+  await page.locator('#time').fill('00:00');
+  await expect(page.locator('#phase')).toHaveAttribute('aria-label', 'Noite');
+  await page.locator('#time').fill('12:00');
+  await expect(page.locator('#phase')).toHaveAttribute('aria-label', 'Dia');
+  await expect(page.locator('#season')).toContainText('Inverno');
   await page.getByRole('button', { name: 'Fontes', exact: true }).click(); await expect(page.locator('#sources-dialog')).toBeVisible(); await page.keyboard.press('Escape');
+  await page.locator('#radius').fill('1000');
+  await expect(page.locator('#export-button')).toBeEnabled();
+  await page.waitForTimeout(200);
+  expect(await page.locator('#radius').evaluate(input => input.checkValidity())).toBe(true);
   const download = page.waitForEvent('download'); await page.locator('#export-button').click();
-  expect((await download).suggestedFilename()).toBe('atlas-2026-06-21.json');
+  const exported = await download;
+  expect(exported.suggestedFilename()).toBe('atlas-2026-06-21.json');
+  const report = JSON.parse(await readFile(await exported.path(), 'utf-8'));
+  expect(report.map.radiusMeters).toBe(1_000_000);
+  expect(report.location.latitude).toBe(-23.5505123456);
+  expect(report.location.elevationMeters).toBe(760.5);
   await page.screenshot({ path: process.env.USERPROFILE + '/.tools/kobb-atlas/atlas-interface.png', fullPage: true });
   expect(errors).toEqual([]);
 });

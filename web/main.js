@@ -4,11 +4,13 @@ import atlasLogo from '../assets/atlas-logo.png';
 import { version } from '../package.json';
 import timeZoneAt from 'tz-lookup';
 import { StudyMap } from './map.js';
+import { pointCategories } from './map-display.js';
+import { phaseIcon } from './phase-icon.js';
 import { SolarStudyClient } from './solar-client.js';
 import { solarDiagram, windDiagram } from './diagrams.js';
-import { validateLocation, localParts, instantFromLocal, sunPosition, seasonEvents, seasonAt, solarPhase, incidence, shadow } from './solar.js';
+import { validateLocation, localParts, instantFromLocal, sunPosition, seasonEvents, solarPhase, incidence, shadow } from './solar.js';
 import { nearestWind, windRose } from './wind.js';
-import { query, nativeRequest, weatherKind, weatherSeries, noiseUse, clearCache } from './services.js';
+import { query, nativeRequest, weatherKind, weatherSeries, noiseUse } from './services.js';
 
 const element = id => document.getElementById(id);
 const text = (id, value) => { element(id).textContent = value; };
@@ -20,7 +22,7 @@ const numeric = (id, minimum, maximum) => {
   if (!Number.isFinite(value) || value < minimum || value > maximum) { input.focus(); throw new Error('Confira os campos destacados.'); }
   return value;
 };
-let state = { latitude: -23.5505, longitude: -46.6333, elevation: 0, elevationOrigin: 'Referência 0 m; confirmar altitude', timeZone: 'America/Sao_Paulo', radius: 120, noiseRadius: 500, surfaceAzimuth: 0, surfaceTilt: 90, shadowHeight: 3, solar: true, wind: true, noise: false, buildings: true };
+let state = { latitude: -23.5505, longitude: -46.6333, elevation: 0, elevationOrigin: 'Referência 0 m; confirmar altitude', timeZone: 'America/Sao_Paulo', radius: 120, noiseRadius: 500, surfaceAzimuth: 0, surfaceTilt: 90, shadowHeight: 3, solar: true, wind: true, noise: false, buildings: false };
 try { const saved = JSON.parse(localStorage.getItem('kobb-atlas-study')); if (saved) { validateLocation(saved.latitude, saved.longitude, saved.elevation); instantFromLocal('2026-01-01', '12:00', saved.timeZone); state = { ...state, latitude: saved.latitude, longitude: saved.longitude, elevation: saved.elevation, elevationOrigin: saved.elevationOrigin ?? 'Informada pelo usuário', timeZone: saved.timeZone }; } } catch {}
 Object.assign(state, localParts(new Date(), state.timeZone));
 let study, position, selectedWind, weather, series = [], dailySeries = [], pois = [], noiseEnvelope;
@@ -29,7 +31,10 @@ const solarClient = new SolarStudyClient();
 function showPoi(properties) {
   text('poi-name', properties.name); text('poi-kind', `${properties.label} · ${properties.role}`); text('poi-noise', 'Nível sonoro não medido'); element('poi-card').hidden = false;
 }
-const map = new StudyMap((latitude, longitude) => guarded(() => setLocation(latitude, longitude, 'Ponto selecionado', null, null, false)), showPoi, message => { text('map-status', message); element('map-status').hidden = !message; });
+const map = new StudyMap((latitude, longitude) => guarded(() => setLocation(latitude, longitude, 'Ponto selecionado', null, null, false)), showPoi, message => { text('map-status', message); element('map-status').hidden = !message; }, threeDimensional => {
+  element('view-2d').setAttribute('aria-pressed', String(!threeDimensional));
+  element('view-3d').setAttribute('aria-pressed', String(threeDimensional));
+});
 element('brand-logo').src = logo;
 element('atlas-logo').style.maskImage = `url("${atlasLogo}")`;
 for (const zone of ['America/Sao_Paulo', 'America/Manaus', 'America/Recife', 'America/Rio_Branco', 'Europe/Lisbon', 'UTC']) { const option = document.createElement('option'); option.value = zone; element('timezones').append(option); }
@@ -58,10 +63,13 @@ async function loadElevation() {
   } catch { if (latitude === state.latitude && longitude === state.longitude) text('status', 'Altitude indisponível. Informe a altitude do ponto.'); }
 }
 function read() {
-  const next = { ...state, date: element('date').value, time: element('time').value, timeZone: element('timezone').value.trim(), radius: numeric('radius', 20, 1000), noiseRadius: numeric('noise-radius', 100, 1000), surfaceAzimuth: numeric('surface-azimuth', 0, 359.9), surfaceTilt: numeric('surface-tilt', 0, 90), shadowHeight: numeric('shadow-height', .1, 300) };
+  const next = { ...state, latitude: numeric('latitude', -85, 85), longitude: numeric('longitude', -180, 180), elevation: numeric('elevation', -500, 9000), date: element('date').value, time: element('time').value, timeZone: element('timezone').value.trim(), radius: numeric('radius', .02, 1000) * 1000, noiseRadius: numeric('noise-radius', 100, 1000), surfaceAzimuth: numeric('surface-azimuth', 0, 359.9), surfaceTilt: numeric('surface-tilt', 0, 90), shadowHeight: numeric('shadow-height', .1, 300) };
+  validateLocation(next.latitude, next.longitude, next.elevation);
   instantFromLocal(next.date, next.time, next.timeZone);
   for (const key of ['solar', 'wind', 'noise', 'buildings']) next[key] = element(`${key}-layer`).checked;
+  if (next.latitude !== state.latitude || next.longitude !== state.longitude) text('place-name', 'Ponto informado');
   state = next;
+  localStorage.setItem('kobb-atlas-study', JSON.stringify(state));
 }
 function hourLabel(instant) { return instant ? localParts(instant, state.timeZone).time : '—'; }
 function bearing(value) {
@@ -95,8 +103,8 @@ async function renderStudy() {
   const plane = incidence(position, state.surfaceAzimuth, state.surfaceTilt), cast = shadow(position, state.shadowHeight);
   solarDiagram(element('solar-diagram'), study, position, state.timeZone);
   windDiagram(element('wind-diagram'), selectedWind, dailySeries);
-  map.update(state, study, position, selectedWind); map.buildings(state.buildings);
-  text('phase', solarPhase(position.altitude)); text('season-name', seasonAt(instant, state.latitude));
+  map.update(state, study, position, selectedWind); configureMap();
+  phaseIcon(element('phase'), solarPhase(position.altitude), position.altitude);
   text('coordinates', `${format(state.latitude, 5)}°, ${format(state.longitude, 5)}°`);
   text('solar-azimuth', `${format(position.azimuth)}°`); text('solar-altitude', `${format(position.altitude)}°`);
   text('incidence', plane.exposed ? `${format(plane.angle)}°` : 'Sem sol direto'); text('shadow', cast ? `${format(cast.length)} m` : 'Sem sombra solar');
@@ -159,10 +167,33 @@ async function loadNoise() {
   } catch (error) { if (serial === noiseSerial) { noiseKey = ''; element('noise-places').replaceChildren(new Option('Consulta indisponível', '')); text('status', `Entorno: ${error.message}`); } }
 }
 function report() {
-  return { product: 'KOBB Atlas', version, exportedAt: new Date().toISOString(), location: { latitude: state.latitude, longitude: state.longitude, elevationMeters: state.elevation, datum: 'WGS84', altitudeOrigin: state.elevationOrigin }, instant: instantFromLocal(state.date, state.time, state.timeZone).toISOString(), timeZone: state.timeZone, solar: { ...position, engine: 'Astronomy Engine 2.1.19', refraction: 'padrão', sunrise: study.sunrise, sunset: study.sunset, solarNoon: study.noon, plane: { azimuth: state.surfaceAzimuth, tilt: state.surfaceTilt, ...incidence(position, state.surfaceAzimuth, state.surfaceTilt) }, shadow: { height: state.shadowHeight, result: shadow(position, state.shadowHeight), model: 'plano horizontal sem obstruções' }, samples: study.samples }, weather: weather ? { provider: 'Open-Meteo', kind: weather.kind, retrievedAt: weather.retrievedAt, grid: { latitude: weather.payload.latitude, longitude: weather.payload.longitude, elevation: weather.payload.elevation }, units: weather.payload.hourly_units, selected: selectedWind, daily: dailySeries } : null, surroundings: { enabled: state.noise, provider: 'OpenStreetMap / Overpass', retrievedAt: noiseEnvelope?.retrievedAt ?? null, radiusMeters: state.noiseRadius, items: state.noise ? pois : [], measuredSoundLevels: false }, map: { provider: 'OpenFreeMap / OpenStreetMap', terrain: 'Mapterhorn 30 m', verticalExaggeration: 1, buildingHeightsMayBeEstimated: true }, scope: 'Estudo ambiental preliminar. Não constitui avaliação normativa, medição acústica, vento estrutural ou simulação de obstruções.' };
+  return { product: 'KOBB Atlas', version, exportedAt: new Date().toISOString(), location: { latitude: state.latitude, longitude: state.longitude, elevationMeters: state.elevation, datum: 'WGS84', altitudeOrigin: state.elevationOrigin }, instant: instantFromLocal(state.date, state.time, state.timeZone).toISOString(), timeZone: state.timeZone, solar: { ...position, engine: 'Astronomy Engine 2.1.19', refraction: 'padrão', sunrise: study.sunrise, sunset: study.sunset, solarNoon: study.noon, plane: { azimuth: state.surfaceAzimuth, tilt: state.surfaceTilt, ...incidence(position, state.surfaceAzimuth, state.surfaceTilt) }, shadow: { height: state.shadowHeight, result: shadow(position, state.shadowHeight), model: 'plano horizontal sem obstruções' }, samples: study.samples }, weather: weather ? { provider: 'Open-Meteo', kind: weather.kind, retrievedAt: weather.retrievedAt, grid: { latitude: weather.payload.latitude, longitude: weather.payload.longitude, elevation: weather.payload.elevation }, units: weather.payload.hourly_units, selected: selectedWind, daily: dailySeries } : null, surroundings: { enabled: state.noise, provider: 'OpenStreetMap / Overpass', retrievedAt: noiseEnvelope?.retrievedAt ?? null, radiusMeters: state.noiseRadius, items: state.noise ? pois : [], measuredSoundLevels: false }, map: { radiusMeters: state.radius, provider: element('basemap').value === 'satellite' ? 'Esri World Imagery' : 'OpenFreeMap / OpenStreetMap', pointCategories: pointCategories.filter(category => element(`points-${category}`).checked), terrain: element('terrain-layer').checked ? 'Mapterhorn 30 m' : null, verticalExaggeration: 1, buildingHeightsMayBeEstimated: true }, scope: 'Estudo ambiental preliminar. Não constitui avaliação normativa, medição acústica, vento estrutural ou simulação de obstruções.' };
 }
+function configureMap() {
+  const categories = pointCategories.filter(category => element(`points-${category}`).checked);
+  const all = element('points-all'); all.checked = categories.length === pointCategories.length; all.indeterminate = categories.length > 0 && !all.checked;
+  map.configure({ basemap: element('basemap').value, quality: element('map-quality').value, terrain: element('terrain-layer').checked, buildings: element('buildings-layer').checked, categories });
+}
+for (const id of ['basemap', 'map-quality', 'terrain-layer', ...pointCategories.map(category => `points-${category}`)]) element(id).addEventListener('change', configureMap);
+element('points-all').addEventListener('change', () => {
+  for (const category of pointCategories) element(`points-${category}`).checked = element('points-all').checked;
+  configureMap();
+});
 element('apply-location').addEventListener('click', () => guarded(() => setLocation(numeric('latitude', -85, 85), numeric('longitude', -180, 180), 'Ponto informado', numeric('elevation', -500, 9000))));
-for (const id of ['date', 'time', 'timezone', 'radius', 'noise-radius', 'surface-azimuth', 'surface-tilt', 'shadow-height', 'solar-layer', 'wind-layer', 'noise-layer', 'buildings-layer']) element(id).addEventListener('change', () => guarded(refresh));
+const liveFields = ['latitude', 'longitude', 'elevation', 'date', 'time', 'timezone', 'radius', 'noise-radius', 'surface-azimuth', 'surface-tilt', 'shadow-height'];
+let liveTimer;
+function updateLive() {
+  clearTimeout(liveTimer);
+  if (liveFields.some(id => !element(id).value.trim() || !element(id).checkValidity())) return;
+  try { instantFromLocal(element('date').value, element('time').value, element('timezone').value.trim()); }
+  catch { return; }
+  guarded(refresh);
+}
+for (const id of liveFields) {
+  element(id).addEventListener('input', () => { clearTimeout(liveTimer); liveTimer = setTimeout(updateLive, 120); });
+  element(id).addEventListener('change', updateLive);
+}
+for (const id of ['solar-layer', 'wind-layer', 'noise-layer', 'buildings-layer']) element(id).addEventListener('change', () => guarded(refresh));
 let sliderFrame;
 element('hour-slider').addEventListener('input', () => { cancelAnimationFrame(sliderFrame); sliderFrame = requestAnimationFrame(() => guarded(() => { const minutes = Number(element('hour-slider').value); element('time').value = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`; refresh(); })); });
 element('now').addEventListener('click', () => guarded(() => { Object.assign(state, localParts(new Date(), state.timeZone)); fields(); refresh(); }));
@@ -178,17 +209,26 @@ element('search-form').addEventListener('submit', event => {
   });
 });
 element('locate').addEventListener('click', () => { text('status', 'Obtendo localização…'); navigator.geolocation.getCurrentPosition(location => guarded(() => setLocation(location.coords.latitude, location.coords.longitude, 'Minha localização', location.coords.altitude ?? 0)), () => text('status', 'Localização indisponível. Busque a cidade ou informe o ponto.'), { timeout: 15_000, maximumAge: 60_000 }); });
-for (const dimension of ['2d', '3d']) element(`view-${dimension}`).addEventListener('click', () => { map.view(dimension === '3d'); for (const value of ['2d', '3d']) element(`view-${value}`).setAttribute('aria-pressed', String(value === dimension)); });
-element('north-up').addEventListener('click', () => map.north()); element('focus-point').addEventListener('click', () => map.focus(state.latitude, state.longitude));
+for (const dimension of ['2d', '3d']) element(`view-${dimension}`).addEventListener('click', () => { map.view(dimension === '3d'); });
+element('focus-point').addEventListener('click', () => map.focus(state.latitude, state.longitude));
 element('close-poi').addEventListener('click', () => { element('poi-card').hidden = true; });
 element('noise-places').addEventListener('change', () => { const poi = pois.find(item => item.osmId === element('noise-places').value); if (poi) { showPoi(poi); map.focus(poi.latitude, poi.longitude); } });
 element('sources-button').addEventListener('click', () => { text('source-time', weather ? `Consulta meteorológica: ${new Date(weather.retrievedAt).toLocaleString('pt-BR')} · uso gratuito não comercial` : 'Dados meteorológicos indisponíveis · uso gratuito não comercial'); element('sources-dialog').showModal(); });
-element('refresh-data').addEventListener('click', () => guarded(() => { clearCache(); weatherKey = ''; noiseKey = ''; refresh(); }));
 for (const id of ['close-sources', 'sources-done']) element(id).addEventListener('click', () => element('sources-dialog').close());
-element('export-button').addEventListener('click', () => guarded(async () => {
-  const data = report();
-  if (window.chrome?.webview) { const result = await nativeRequest('export', data); if (result.saved) text('status', 'Estudo exportado'); }
-  else { const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `atlas-${state.date}.json`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); text('status', 'Estudo exportado'); }
+element('export-button').addEventListener('click', () => element('export-dialog').showModal());
+element('close-export').addEventListener('click', () => element('export-dialog').close());
+if (window.chrome?.webview) nativeRequest('export-capabilities', {}).then(result => { element('export-format').querySelector('[value="dwg"]').disabled = !result.dwg; }).catch(() => {});
+element('export-save').addEventListener('click', () => guarded(async () => {
+  const button = element('export-save'); button.disabled = true;
+  text('status', 'Preparando arquivo...');
+  try {
+    const data = report();
+    const { exportStudy } = await import('./study-export.js');
+    const result = await exportStudy(element('export-format').value, map, data);
+    if (result.saved) { text('status', 'Estudo exportado'); element('export-dialog').close(); }
+    else text('status', '');
+  } finally { button.disabled = false; }
 }));
+
 element('elevation').addEventListener('input', () => { state.elevationOrigin = 'Informada pelo usuário'; });
 fields(); guarded(refresh); map.focus(state.latitude, state.longitude); if (state.elevationOrigin === 'Referência 0 m; confirmar altitude') loadElevation();

@@ -1,7 +1,7 @@
 {
     "id":  "kobb-atlas",
     "name":  "KOBB Atlas",
-    "version":  "0.1.2",
+    "version":  "0.1.10",
     "description":  "Sol, ventos e entorno para o seu projeto.",
     "website":  "https://kobbstudio.com.br",
     "thankYouUrl":  "https://kobbstudio.com.br/atlas/obrigado",
@@ -20,11 +20,11 @@
     "files":  [
                   {
                       "path":  "kobb-atlas.exe",
-                      "sha256":  "95BE721D1F07E41EBF943DE5EBCB312A0DD249DC2D43E6160285FBAAAF57CB4A"
+                      "sha256":  "386865229F70F15EB27F4E45514D390363EBA03C6C00A6434EB707F288020A8E"
                   },
                   {
                       "path":  "README.md",
-                      "sha256":  "198D014A6265DD9DFF82F56116B3DC186DE9E2A16A9187CB26E55E9237AC4823"
+                      "sha256":  "EFCCF608F9D2EF903834290C6FC0945298A20EE760F24880B5E19BE7100F04A7"
                   },
                   {
                       "path":  "THIRD-PARTY-NOTICES.txt",
@@ -35,12 +35,12 @@
                       "sha256":  "64C7612EE0E5F509F2A8287EC637865F631633BCCD6EEFB5EDD8D6DD332C38F7"
                   },
                   {
-                      "path":  "web/assets/index-B5ZnDfe9.js",
-                      "sha256":  "77C2BC873895D9F2ED1264FD2ED2D466CF801E3D294FB37242A569E16FB0DF97"
+                      "path":  "web/assets/index-DGbjP6sM.css",
+                      "sha256":  "EC5BA38BB4F7A8E5C293BD9FD8A1A56C24E30B71BEC7EDE2A5034E9F9A1F6A63"
                   },
                   {
-                      "path":  "web/assets/index-BLqWc2HG.css",
-                      "sha256":  "F4BE3A2E5CA3BBD4CA3047472B009845E0A00356DA2984B606B11FEAF752E487"
+                      "path":  "web/assets/index-DJ0lkzHp.js",
+                      "sha256":  "761BE1BEC853F731697935C72003C1BA2240EDB0158ECBF78506B054DCC45508"
                   },
                   {
                       "path":  "web/assets/kobb-studio-tCTMeVur.png",
@@ -56,7 +56,7 @@
                   },
                   {
                       "path":  "web/index.html",
-                      "sha256":  "7C5E7BF41C22AAEE238359A091B3C4013077FE0376CB1B19E71B88F773841531"
+                      "sha256":  "C40D262CC23FBB3C6E5E9D5649CC8DD282F99DE132CA44DF04555B84F1B1D54D"
                   }
               ]
 }

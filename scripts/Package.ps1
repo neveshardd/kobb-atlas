@@ -46,7 +46,7 @@ try {
         if ($previousPayload -ne [IO.Path]::GetFullPath((Join-Path $companyRoot 'products/kobb-atlas/payload'))) { throw 'Destino do pacote inválido.' }
         Remove-Item -LiteralPath $previousPayload -Recurse -Force
     }
-    & (Join-Path $installerRoot 'scripts/Build.ps1') -ProductId kobb-atlas -ProductRoot $projectRoot -ProductIcon (Join-Path $projectRoot 'assets/atlas-logo.png') -OutputDirectory $output -ReleasePackage
+    & (Join-Path $installerRoot 'scripts/Build.ps1') -ProductId kobb-atlas -ProductRoot $projectRoot -ProductIcon (Join-Path $projectRoot 'assets/atlas-logo.png') -PreparedIconPath $iconPath -OutputDirectory $output -ReleasePackage
     $installerPath = Join-Path $output "kobb-atlas-setup-$($catalog.version).exe"
     Move-Item -LiteralPath (Join-Path $output 'kobb-installer.exe') -Destination $installerPath -Force
     if (!$SkipChecks) {
